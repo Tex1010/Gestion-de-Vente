@@ -11,11 +11,19 @@ Boutique en ligne Django avec deux espaces :
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+copy .env.example .env
 python manage.py migrate
 python manage.py seed_demo_store
 python manage.py createsuperuser
 python manage.py runserver 127.0.0.1:8010
 ```
+
+## Configuration
+
+- Par defaut, le projet charge `config.settings.dev`.
+- Les variables d'environnement peuvent etre placees dans `.env`.
+- Pour la production, utilisez `config.settings.prod` et installez `requirements/prod.txt`.
+- `DATABASE_URL` permet de basculer facilement vers PostgreSQL sans changer le code.
 
 ## Administration
 

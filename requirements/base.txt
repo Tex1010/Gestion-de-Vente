@@ -1,0 +1,5 @@
+Django==6.0.7
+Pillow==12.3.0
+dj-database-url==3.0.1
+python-dotenv==1.1.1
+whitenoise==6.11.0
