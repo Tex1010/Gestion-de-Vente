@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil | {{ site_config.site_name }}{% endblock %}
+
+{% block content %}
+<section class="hero-section py-5 py-lg-6">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <span class="hero-badge">Boutique en ligne professionnelle</span>
+                <h1 class="display-5 fw-bold mt-3">{{ site_config.hero_title }}</h1>
+                <p class="lead text-light-emphasis mt-3">{{ site_config.hero_subtitle }}</p>
+                <div class="d-flex flex-wrap gap-3 mt-4">
+                    <a href="#catalogue" class="btn btn-primary btn-lg rounded-pill px-4">Voir les produits</a>
+                    <a href="{% url 'orders:cart_detail' %}" class="btn btn-outline-light btn-lg rounded-pill px-4">Mon panier</a>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="hero-panel p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="small text-uppercase text-primary fw-semibold">Commande rapide</span>
+                        <i class="bi bi-lightning-charge-fill text-warning fs-4"></i>
+                    </div>
+                    <div class="hero-stat">
+                        <strong>Catalogue par categories</strong>
+                        <span>{{ categories|length }} categories disponibles</span>
+                    </div>
+                    <div class="hero-stat">
+                        <strong>Panier dynamique</strong>
+                        <span>Ajout, mise a jour, suppression et checkout fluide</span>
+                    </div>
+                    <div class="hero-stat">
+                        <strong>Interface admin</strong>
+                        <span>Produits, commandes, branding et page a propos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="filter-box p-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
+                <div>
+                    <h2 class="h3 mb-1">Catalogue intelligent</h2>
+                    <p class="text-muted mb-0">Trie les produits par categorie et recherche rapidement ce que tu veux.</p>
+                </div>
+                <a href="/admin/" class="btn btn-outline-primary rounded-pill">
+                    <i class="bi bi-shield-lock me-2"></i>Acceder a l'admin
+                </a>
+            </div>
+            <form method="get" class="row g-3">
+                <div class="col-lg-5">
+                    <input type="search" class="form-control form-control-lg" name="q" value="{{ search_term }}" placeholder="Rechercher un produit...">
+                </div>
+                <div class="col-lg-4">
+                    <select class="form-select form-select-lg" name="categorie">
+                        <option value="">Toutes les categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.slug }}" {% if selected_category == category.slug %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-3 d-grid">
+                    <button class="btn btn-dark btn-lg">Filtrer maintenant</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+{% if featured_products %}
+<section class="pb-5">
+    <div class="container">
+        <div class="section-heading d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <span class="eyebrow">Selection premium</span>
+                <h2 class="h3 mb-0">Produits vedettes</h2>
+            </div>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+            {% for product in featured_products %}
+                {% include "includes/product_card.html" %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<section class="pb-5" id="catalogue">
+    <div class="container">
+        <div class="section-heading d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <span class="eyebrow">Catalogue complet</span>
+                <h2 class="h3 mb-0">Tous les produits</h2>
+            </div>
+            <span class="text-muted">{{ products|length }} produit{{ products|length|pluralize }}</span>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+            {% for product in products %}
+                {% include "includes/product_card.html" %}
+            {% empty %}
+                <div class="col-12">
+                    <div class="empty-state text-center p-5">
+                        <i class="bi bi-search fs-1 d-block mb-3"></i>
+                        <h3 class="h4">Aucun produit trouve</h3>
+                        <p class="text-muted mb-0">Essaie une autre categorie ou un autre mot-cle.</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="pb-5">
+    <div class="container">
+        <div class="section-heading mb-4">
+            <span class="eyebrow">Par categorie</span>
+            <h2 class="h3 mb-0">Organisation du catalogue</h2>
+        </div>
+        <div class="row g-4">
+            {% for category in categories %}
+                <div class="col-lg-4">
+                    <div class="category-card p-4 h-100">
+                        <h3 class="h5">{{ category.name }}</h3>
+                        <p class="text-muted">{{ category.description|default:"Cette categorie peut etre gerée depuis l'administration." }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small text-primary fw-semibold">{{ category.products.count }} produit{{ category.products.count|pluralize }}</span>
+                            <a href="/?categorie={{ category.slug }}" class="text-decoration-none">Explorer</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

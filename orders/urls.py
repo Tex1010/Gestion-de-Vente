@@ -1,0 +1,21 @@
+from django.urls import path
+
+from .views import (
+    cart_add,
+    cart_detail,
+    cart_remove,
+    cart_update,
+    checkout,
+    order_success,
+)
+
+app_name = "orders"
+
+urlpatterns = [
+    path("panier/", cart_detail, name="cart_detail"),
+    path("panier/ajouter/<int:product_id>/", cart_add, name="cart_add"),
+    path("panier/modifier/<int:product_id>/", cart_update, name="cart_update"),
+    path("panier/supprimer/<int:product_id>/", cart_remove, name="cart_remove"),
+    path("commande/", checkout, name="checkout"),
+    path("commande/succes/<int:order_id>/", order_success, name="order_success"),
+]

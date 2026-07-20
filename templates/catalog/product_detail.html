@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} | {{ site_config.site_name }}{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="content-panel p-4 h-100">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded-4 w-100">
+                    {% else %}
+                        <div class="product-placeholder product-placeholder-large">
+                            <i class="bi bi-image"></i>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="content-panel p-4 h-100">
+                    <span class="eyebrow">{{ product.category.name }}</span>
+                    <h1 class="display-6 fw-bold mt-2">{{ product.name }}</h1>
+                    <p class="text-muted mt-3">{{ product.description }}</p>
+                    <div class="d-flex align-items-center gap-3 my-4">
+                        <span class="display-6 fw-bold text-primary">{{ product.price }} Ar</span>
+                        {% if product.old_price %}
+                            <span class="text-decoration-line-through text-muted">{{ product.old_price }} Ar</span>
+                        {% endif %}
+                    </div>
+                    <p class="{% if product.stock > 0 %}text-success{% else %}text-danger{% endif %}">
+                        {% if product.stock > 0 %}
+                            <i class="bi bi-check-circle me-2"></i>{{ product.stock }} unite{{ product.stock|pluralize }} disponible{{ product.stock|pluralize }}
+                        {% else %}
+                            <i class="bi bi-x-circle me-2"></i>Produit en rupture de stock
+                        {% endif %}
+                    </p>
+                    <form method="post" action="{% url 'orders:cart_add' product.id %}" class="row g-3 align-items-end mt-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <div class="col-sm-4">
+                            <label class="form-label">Quantite</label>
+                            <input type="number" class="form-control" name="quantity" value="1" min="1" max="{{ product.stock|default:1 }}">
+                        </div>
+                        <div class="col-sm-8 d-grid">
+                            <button class="btn btn-primary btn-lg" {% if product.stock == 0 %}disabled{% endif %}>
+                                <i class="bi bi-cart-plus me-2"></i>Ajouter au panier
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if related_products %}
+<section class="pb-5">
+    <div class="container">
+        <div class="section-heading mb-4">
+            <span class="eyebrow">Suggestions</span>
+            <h2 class="h3 mb-0">Produits similaires</h2>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4">
+            {% for product in related_products %}
+                {% include "includes/product_card.html" %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

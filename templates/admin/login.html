@@ -1,0 +1,176 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Connexion Admin | {{ site_config.site_name|default:site_header }}</title>
+    <meta name="description" content="Connexion securisee a l'interface administrateur">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{% static 'core/css/admin-login.css' %}" rel="stylesheet">
+</head>
+<body class="admin-login-body">
+    <div class="admin-login-shell">
+        <div class="container">
+            <div class="row min-vh-100 align-items-center py-4 py-lg-5 g-4">
+                <div class="col-lg-6">
+                    <div class="brand-side">
+                        <a href="/" class="back-link">
+                            <i class="bi bi-arrow-left"></i>
+                            Retour vers la boutique
+                        </a>
+                        <div class="brand-pill">
+                            <i class="bi bi-shield-lock-fill"></i>
+                            Espace administrateur
+                        </div>
+                        <h1 class="display-4 fw-bold mt-4 mb-3">
+                            Gerez votre boutique avec une interface moderne et securisee.
+                        </h1>
+                        <p class="lead text-white-50 mb-4">
+                            Accedez a la gestion des produits, des categories, du branding du site
+                            et des commandes clientes depuis un tableau d'administration centralise.
+                        </p>
+                        <div class="feature-grid">
+                            <div class="feature-card">
+                                <i class="bi bi-box-seam"></i>
+                                <div>
+                                    <strong>Catalogue pro</strong>
+                                    <span>Produits, categories, stock et mise en avant.</span>
+                                </div>
+                            </div>
+                            <div class="feature-card">
+                                <i class="bi bi-brush"></i>
+                                <div>
+                                    <strong>Personnalisation</strong>
+                                    <span>Titre, logo, page a propos et reseaux sociaux.</span>
+                                </div>
+                            </div>
+                            <div class="feature-card">
+                                <i class="bi bi-receipt"></i>
+                                <div>
+                                    <strong>Suivi des commandes</strong>
+                                    <span>Visualisez les commandes et leur etat en temps reel.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="login-card">
+                        <div class="login-card-header">
+                            <div class="brand-badge">
+                                {% if site_config.logo %}
+                                    <img src="{{ site_config.logo.url }}" alt="{{ site_config.site_name }}">
+                                {% else %}
+                                    <i class="bi bi-bag-check-fill"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="small text-uppercase text-primary fw-semibold mb-2">Connexion securisee</div>
+                                <h2 class="h1 mb-2">{{ site_header }}</h2>
+                                <p class="text-muted mb-0">
+                                    Connectez-vous pour acceder a la gestion de votre boutique.
+                                </p>
+                            </div>
+                        </div>
+
+                        {% if form.errors and not form.non_field_errors %}
+                            <div class="alert alert-danger border-0 rounded-4 mt-4 mb-0">
+                                Nom d'utilisateur ou mot de passe incorrect.
+                            </div>
+                        {% endif %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger border-0 rounded-4 mt-4 mb-0">
+                                {% for error in form.non_field_errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if user.is_authenticated %}
+                            <div class="alert alert-warning border-0 rounded-4 mt-4 mb-0">
+                                Vous etes deja connecte avec un compte ne pouvant pas acceder a cette page.
+                            </div>
+                        {% endif %}
+
+                        <form method="post" action="{{ app_path }}" class="mt-4">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ form.username.id_for_label }}">
+                                    Nom d'utilisateur
+                                </label>
+                                <div class="input-group input-group-lg modern-input">
+                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                    <input
+                                        type="text"
+                                        name="{{ form.username.html_name }}"
+                                        id="{{ form.username.id_for_label }}"
+                                        class="form-control"
+                                        value="{{ form.username.value|default:'' }}"
+                                        placeholder="Entrez votre identifiant"
+                                        autofocus
+                                        required
+                                    >
+                                </div>
+                                {% if form.username.errors %}
+                                    <div class="text-danger small mt-2">{{ form.username.errors|striptags }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ form.password.id_for_label }}">
+                                    Mot de passe
+                                </label>
+                                <div class="input-group input-group-lg modern-input">
+                                    <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                    <input
+                                        type="password"
+                                        name="{{ form.password.html_name }}"
+                                        id="{{ form.password.id_for_label }}"
+                                        class="form-control"
+                                        placeholder="Entrez votre mot de passe"
+                                        required
+                                    >
+                                </div>
+                                {% if form.password.errors %}
+                                    <div class="text-danger small mt-2">{{ form.password.errors|striptags }}</div>
+                                {% endif %}
+                            </div>
+
+                            {% if next %}
+                                <input type="hidden" name="next" value="{{ next }}">
+                            {% endif %}
+
+                            <div class="d-grid gap-3 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg login-btn">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                                    Se connecter
+                                </button>
+                                <a href="/" class="btn btn-light btn-lg secondary-btn">
+                                    Revenir a l'accueil
+                                </a>
+                            </div>
+                        </form>
+
+                        <div class="login-footer">
+                            <div>
+                                <strong>{{ site_config.site_name|default:"CVB Store" }}</strong>
+                                <span>Administration, produits et commandes centralises.</span>
+                            </div>
+                            <div class="secure-badge">
+                                <i class="bi bi-shield-check"></i>
+                                Django Admin
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

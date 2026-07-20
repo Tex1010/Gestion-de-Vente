@@ -1,0 +1,35 @@
+git init
+git remote add origin https://github.com/Tex1010/Gestion-Personnel-DU-CVB.git
+git branch -M main
+git push -u origin main
+
+
+git add .
+git commit -m "Ok"
+git push
+
+git pull
+
+git clone https://github.com/Tex1010/Gestion-Personnel-DU-CVB.git
+cd Gestion-Personnel-DU-CVB
+
+
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+pip install weasyprint
+python manage.py makemigrations
+python manage.py migrate
+
+python manage.py createsuperuser
+python manage.py runserver
+
+python manage.py runserver 10.0.2.76:8000
+
+start nginx
+
+.\nginx.exe -s reload
+
+.\cloudflared.exe --version
+.\cloudflared.exe tunnel list
+.\cloudflared.exe tunnel create cvb-personnel

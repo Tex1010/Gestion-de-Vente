@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ site_config.site_name }}{% endblock %}</title>
+    <meta name="description" content="{{ site_config.site_tagline }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{% static 'core/css/styles.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top glass-nav">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-3" href="{% url 'core:home' %}">
+                {% if site_config.logo %}
+                    <img src="{{ site_config.logo.url }}" alt="{{ site_config.site_name }}" class="brand-logo">
+                {% else %}
+                    <span class="brand-mark"><i class="bi bi-bag-check-fill"></i></span>
+                {% endif %}
+                <span>
+                    <strong>{{ site_config.site_name }}</strong>
+                    <small class="d-block text-light-emphasis">{{ site_config.site_tagline }}</small>
+                </span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:home' %}">Accueil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'a-propos' in request.path %}active{% endif %}" href="{% url 'core:about' %}">A propos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'panier' in request.path or 'commande' in request.path %}active{% endif %}" href="{% url 'orders:cart_detail' %}">
+                            <i class="bi bi-cart3 me-1"></i>Panier
+                            <span class="badge rounded-pill text-bg-light ms-1">{{ cart_item_count }}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary rounded-pill px-4" href="{% url 'orders:checkout' %}">
+                            Commander
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pb-5">
+        {% if messages %}
+            <div class="container pt-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer py-5">
+        <div class="container">
+            <div class="row g-4 align-items-start">
+                <div class="col-lg-5">
+                    <h5 class="mb-3">{{ site_config.site_name }}</h5>
+                    <p class="mb-3 text-light-emphasis">{{ site_config.site_tagline }}</p>
+                    {% if site_config.address %}
+                        <p class="mb-0"><i class="bi bi-geo-alt me-2"></i>{{ site_config.address }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-lg-4">
+                    <h6 class="mb-3">Navigation</h6>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="{% url 'core:home' %}">Accueil</a>
+                        <a href="{% url 'core:about' %}">A propos</a>
+                        <a href="{% url 'orders:cart_detail' %}">Panier</a>
+                        <a href="/admin/">Administration</a>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <h6 class="mb-3">Contact</h6>
+                    {% if site_config.contact_phone %}
+                        <p class="mb-2"><i class="bi bi-telephone me-2"></i>{{ site_config.contact_phone }}</p>
+                    {% endif %}
+                    <div class="d-flex gap-3 fs-4">
+                        {% if site_config.whatsapp_url %}
+                            <a href="{{ site_config.whatsapp_url }}" target="_blank" rel="noreferrer"><i class="bi bi-whatsapp"></i></a>
+                        {% endif %}
+                        {% if site_config.facebook_url %}
+                            <a href="{{ site_config.facebook_url }}" target="_blank" rel="noreferrer"><i class="bi bi-facebook"></i></a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    {% if site_config.whatsapp_url %}
+        <a href="{{ site_config.whatsapp_url }}" class="social-float social-whatsapp" target="_blank" rel="noreferrer" aria-label="WhatsApp">
+            <i class="bi bi-whatsapp"></i>
+        </a>
+    {% endif %}
+    {% if site_config.facebook_url %}
+        <a href="{{ site_config.facebook_url }}" class="social-float social-facebook" target="_blank" rel="noreferrer" aria-label="Facebook">
+            <i class="bi bi-facebook"></i>
+        </a>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

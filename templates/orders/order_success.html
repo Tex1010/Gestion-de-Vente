@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Commande confirmee | {{ site_config.site_name }}{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="content-panel p-5 text-center">
+            <div class="success-icon mb-4">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <span class="eyebrow">Commande enregistree</span>
+            <h1 class="display-6 fw-bold mt-2">Merci {{ order.full_name }}</h1>
+            <p class="lead text-muted">Votre commande numero {{ order.id }} a bien ete recue. Le statut actuel est : <strong>{{ order.get_status_display }}</strong>.</p>
+            <p class="mb-4">Montant total : <strong>{{ order.total_amount }} Ar</strong></p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="{% url 'core:home' %}" class="btn btn-primary btn-lg px-4">Retour a l'accueil</a>
+                <a href="/admin/orders/order/{{ order.id }}/change/" class="btn btn-outline-dark btn-lg px-4">Voir dans l'admin</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
