@@ -993,6 +993,27 @@
   border-color: var(--db-primary);
 }
 
+/* Fixed toggle button visible on mobile/tablet when scrolling */
+.sidebar-toggle.fixed-toggle {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1000;
+  background: var(--db-primary);
+  color: #fff;
+  border-color: var(--db-primary);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.sidebar-toggle.fixed-toggle:hover {
+  background: var(--db-primary-hover);
+  color: #fff;
+}
+
+body.sidebar-overlay-active .sidebar-toggle.fixed-toggle {
+  z-index: 1000;
+}
+
 /* ===== SIDEBAR OVERLAY ===== */
 .sidebar-overlay {
   display: none;

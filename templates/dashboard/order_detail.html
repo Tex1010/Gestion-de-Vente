@@ -114,21 +114,31 @@
         </div>
         {% endif %}
 
-        <div class="mt-4">
-            <strong class="d-block mb-2">Modifier le statut :</strong>
-            <form method="post" class="d-flex gap-2 flex-wrap">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="update_status">
-                <select name="status" class="form-select" style="width:auto;">
-                    {% for key, label in status_choices %}
-                    <option value="{{ key }}" {% if order.status == key %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="btn-db-primary">
-                    <i class="bi bi-arrow-repeat"></i> Mettre à jour
-                </button>
-            </form>
-        </div>
+                        <div class="mt-4">
+                            <strong class="d-block mb-2">Modifier le statut :</strong>
+                            {% if valid_statuses %}
+                            <form method="post" class="d-flex gap-2 flex-wrap">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_status">
+                                <select name="status" class="form-select" style="width:auto;">
+                                    {% for key, label in valid_statuses %}
+                                    <option value="{{ key }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn-db-primary">
+                                    <i class="bi bi-arrow-repeat"></i> Mettre à jour
+                                </button>
+                            </form>
+                            {% else %}
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-lock me-1"></i>
+                                {% if order.status == 'cancelled' %}Cette commande est annulée, aucun changement possible.
+                                {% elif order.status == 'delivered' %}Cette commande est livrée, aucun changement possible.
+                                {% else %}Aucune transition disponible.
+                                {% endif %}
+                            </p>
+                            {% endif %}
+                        </div>
     </div>
 </div>
 {% endblock %}

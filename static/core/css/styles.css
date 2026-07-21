@@ -166,18 +166,18 @@ body {
     color: white;
 }
 
-/* Floating social icons - right side vertical stack */
+/* Floating social icons - responsive right side vertical stack */
 .social-float {
     position: fixed;
     right: 1.25rem;
-    width: 52px;
-    height: 52px;
+    width: 48px;
+    height: 48px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
     color: white;
-    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.3);
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
     z-index: 1040;
     text-decoration: none;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -190,27 +190,27 @@ body {
 }
 
 .social-whatsapp {
-    bottom: 11.5rem;
+    bottom: 2rem;
     background: #25d366;
 }
 
 .social-facebook {
-    bottom: 9rem;
+    bottom: 4.5rem;
     background: #1877f2;
 }
 
 .social-instagram {
-    bottom: 6.5rem;
+    bottom: 7rem;
     background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af);
 }
 
 .social-telegram {
-    bottom: 4rem;
+    bottom: 9.5rem;
     background: #0088cc;
 }
 
 .social-tiktok {
-    bottom: 1.5rem;
+    bottom: 12rem;
     background: #111111;
 }
 
@@ -238,16 +238,16 @@ body {
 /* ===== TABLETTE - Social icons repositioning ===== */
 @media (min-width: 576px) and (max-width: 991.98px) {
     .social-float {
-        width: 48px;
-        height: 48px;
-        right: 1rem;
-        font-size: 1.2rem;
+        width: 44px;
+        height: 44px;
+        right: 0.85rem;
+        font-size: 1.1rem;
     }
-    .social-whatsapp { bottom: 12rem; }
-    .social-facebook { bottom: 9.5rem; }
-    .social-instagram { bottom: 7rem; }
-    .social-telegram { bottom: 4.5rem; }
-    .social-tiktok { bottom: 2rem; }
+    .social-whatsapp { bottom: 1.75rem; }
+    .social-facebook { bottom: 4rem; }
+    .social-instagram { bottom: 6.25rem; }
+    .social-telegram { bottom: 8.5rem; }
+    .social-tiktok { bottom: 10.75rem; }
 }
 
 /* ===== SAUT DE LIGNE SUR MOBILE POUR LES BOUTONS HERO ===== */
@@ -281,16 +281,16 @@ body {
         font-size: 0.85rem !important;
     }
     .social-float {
-        width: 44px;
-        height: 44px;
-        right: 0.85rem;
-        font-size: 1.1rem;
+        width: 40px;
+        height: 40px;
+        right: 0.75rem;
+        font-size: 1rem;
     }
-    .social-whatsapp { bottom: 10rem; }
-    .social-facebook { bottom: 7.75rem; }
+    .social-whatsapp { bottom: 1.5rem; }
+    .social-facebook { bottom: 3.5rem; }
     .social-instagram { bottom: 5.5rem; }
-    .social-telegram { bottom: 3.25rem; }
-    .social-tiktok { bottom: 1rem; }
+    .social-telegram { bottom: 7.5rem; }
+    .social-tiktok { bottom: 9.5rem; }
 }
 
 /* ===== RESPONSIVE NAVBAR ===== */

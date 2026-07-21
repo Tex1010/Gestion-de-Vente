@@ -1,6 +1,6 @@
 /**
  * Dashboard responsive enhancements
- * - Sidebar toggle on mobile
+ * - Sidebar toggle on mobile (fixed/sticky position)
  * - Touch optimizations
  * - Smooth transitions
  */
@@ -10,30 +10,23 @@
     function initDashboard() {
         const sidebar = document.querySelector('.sidebar');
         const topbar = document.querySelector('.topbar');
+        const dashboardMain = document.querySelector('.dashboard-main');
 
         if (!sidebar) return;
 
-        // Create hamburger toggle button in topbar
-        if (topbar) {
-            const toggleBtn = document.createElement('button');
-            toggleBtn.className = 'sidebar-toggle';
-            toggleBtn.setAttribute('aria-label', 'Menu');
-            toggleBtn.setAttribute('type', 'button');
-            toggleBtn.innerHTML = '<i class="bi bi-list"></i>';
-            
-            // Insert at the beginning of topbar-actions or before user-chip
-            const topbarActions = topbar.querySelector('.topbar-actions');
-            if (topbarActions) {
-                topbarActions.insertBefore(toggleBtn, topbarActions.firstChild);
-            } else {
-                topbar.insertBefore(toggleBtn, topbar.firstChild);
-            }
+        // Create hamburger toggle button as fixed element
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'sidebar-toggle fixed-toggle';
+        toggleBtn.setAttribute('aria-label', 'Menu');
+        toggleBtn.setAttribute('type', 'button');
+        toggleBtn.innerHTML = '<i class="bi bi-list"></i>';
+        // Add it to sidebar
+        sidebar.appendChild(toggleBtn);
 
-            toggleBtn.addEventListener('click', function () {
-                sidebar.classList.toggle('sidebar-open');
-                document.body.classList.toggle('sidebar-overlay-active');
-            });
-        }
+        toggleBtn.addEventListener('click', function () {
+            sidebar.classList.toggle('sidebar-open');
+            document.body.classList.toggle('sidebar-overlay-active');
+        });
 
         // Create overlay backdrop
         const overlay = document.createElement('div');

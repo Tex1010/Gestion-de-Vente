@@ -314,17 +314,27 @@ def order_detail(request, pk):
     if request.method == "POST" and request.POST.get("action") == "update_status":
         new_status = request.POST.get("status")
         if new_status in dict(Order.STATUS_CHOICES):
-            order.status = new_status
-            order.save(update_fields=["status", "updated_at"])
-            messages.success(
-                request,
-                f"Commande # {order.id} : statut mis à jour → {order.get_status_display()}.",
-            )
+            if order.can_transition_to(new_status):
+                order.status = new_status
+                order.save(update_fields=["status", "updated_at"])
+                messages.success(
+                    request,
+                    f"Commande # {order.id} : statut mis à jour → {order.get_status_display()}.",
+                )
+            else:
+                messages.error(
+                    request,
+                    f"Transition de statut impossible : {order.get_status_display()} → {dict(Order.STATUS_CHOICES).get(new_status, new_status)}.",
+                )
         return redirect("dashboard:order_detail", pk=order.pk)
+
+    # Filtrer les statuts disponibles pour la transition
+    valid_statuses = [(s, label) for s, label in Order.STATUS_CHOICES if order.can_transition_to(s)]
 
     context = {
         "order": order,
         "status_choices": Order.STATUS_CHOICES,
+        "valid_statuses": valid_statuses,
     }
     return render(request, "dashboard/order_detail.html", context)
 

@@ -62,7 +62,6 @@
                 <table class="table-db">
                     <thead>
                         <tr>
-                            <th>N°</th>
                             <th>Client</th>
                             <th>Montant</th>
                             <th>Statut</th>
@@ -73,8 +72,7 @@
                     <tbody>
                         {% for order in recent_orders %}
                         <tr>
-                            <td><strong>#{{ order.id }}</strong></td>
-                            <td>{{ order.full_name }}</td>
+                            <td><strong>#{{ order.id }}</strong> {{ order.full_name }}</td>
                             <td>{{ order.total_amount|floatformat:0 }} Ar</td>
                             <td>
                                 <span class="status-badge status-{{ order.status }}">

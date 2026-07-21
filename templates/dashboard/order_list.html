@@ -32,7 +32,6 @@
             <table class="table-db">
                 <thead>
                     <tr>
-                        <th>N°</th>
                         <th>Client</th>
                         <th>Contact</th>
                         <th>Montant</th>
@@ -45,8 +44,7 @@
                 <tbody>
                     {% for order in orders %}
                     <tr>
-                        <td data-label="N°"><strong>#{{ order.id }}</strong></td>
-                        <td data-label="Client">{{ order.full_name }}</td>
+                        <td data-label="Client"><strong>#{{ order.id }}</strong> {{ order.full_name }}</td>
                         <td data-label="Contact">
                             <small>{{ order.phone }}</small><br>
                             <small class="text-soft">{{ order.email|default:'' }}</small>

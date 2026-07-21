@@ -78,9 +78,9 @@
                         <td data-label="SKU"><code class="text-muted">{{ product.sku|default:"—" }}</code></td>
                         <td data-label="Catégorie">{{ product.category.name }}</td>
                         <td data-label="Prix">
-                            <strong>{{ product.price|floatformat:2 }} €</strong>
+                            <strong>{{ product.price|floatformat:0 }} Ar</strong>
                             {% if product.old_price %}
-                            <br><small class="text-decoration-line-through text-soft">{{ product.old_price|floatformat:2 }} €</small>
+                            <br><small class="text-decoration-line-through text-soft">{{ product.old_price|floatformat:0 }} Ar</small>
                             {% endif %}
                         </td>
                         <td data-label="Stock">

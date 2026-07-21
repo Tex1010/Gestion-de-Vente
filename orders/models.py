@@ -19,9 +19,18 @@ class Order(models.Model):
         (STATUS_CONFIRMED, "Confirmée"),
         (STATUS_PREPARING, "En préparation"),
         (STATUS_SHIPPED, "Expédiée"),
-        (STATUS_DELIVERED, "Livree"),
-        (STATUS_CANCELLED, "Annulee"),
+        (STATUS_DELIVERED, "Livrée"),
+        (STATUS_CANCELLED, "Annulée"),
     ]
+
+    VALID_TRANSITIONS = {
+        STATUS_PENDING: [STATUS_CONFIRMED, STATUS_CANCELLED],
+        STATUS_CONFIRMED: [STATUS_PREPARING, STATUS_CANCELLED],
+        STATUS_PREPARING: [STATUS_SHIPPED, STATUS_CANCELLED],
+        STATUS_SHIPPED: [STATUS_DELIVERED],
+        STATUS_DELIVERED: [],
+        STATUS_CANCELLED: [],
+    }
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -79,6 +88,15 @@ class Order(models.Model):
             if method == self.payment_method:
                 return label
         return self.payment_method or ""
+
+    def can_transition_to(self, new_status):
+        """Vérifie si la transition vers le nouveau statut est autorisée."""
+        if self.status == self.STATUS_CANCELLED:
+            return False
+        if self.status == self.STATUS_DELIVERED:
+            return False
+        allowed = self.VALID_TRANSITIONS.get(self.status, [])
+        return new_status in allowed
 
     def recalculate_total(self):
         total = sum(
