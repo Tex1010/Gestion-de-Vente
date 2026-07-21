@@ -98,16 +98,16 @@
                                 <strong>{{ item.product_name }}</strong>
                             </div>
                         </td>
-                        <td>{{ item.unit_price|floatformat:2 }} €</td>
+                        <td>{{ item.unit_price|floatformat:0 }} Ar</td>
                         <td>{{ item.quantity }}</td>
-                        <td><strong>{{ item.subtotal|floatformat:2 }} €</strong></td>
+                        <td><strong>{{ item.subtotal|floatformat:0 }} Ar</strong></td>
                     </tr>
                     {% endfor %}
                 </tbody>
                 <tfoot>
                     <tr class="order-total-row">
                         <td colspan="3" class="text-end">Total</td>
-                        <td>{{ order.total_amount|floatformat:2 }} €</td>
+                        <td>{{ order.total_amount|floatformat:0 }} Ar</td>
                     </tr>
                 </tfoot>
             </table>

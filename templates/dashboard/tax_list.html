@@ -33,25 +33,27 @@
             <tbody>
                 {% for tax in taxes %}
                 <tr>
-                    <td><strong>{{ tax.name }}</strong></td>
-                    <td>{{ tax.rate }}%</td>
-                    <td>
+                    <td data-label="Nom"><strong>{{ tax.name }}</strong></td>
+                    <td data-label="Taux">{{ tax.rate }}%</td>
+                    <td data-label="Défaut">
                         {% if tax.is_default %}
                             <span class="badge bg-info">Par défaut</span>
                         {% else %}
                             <span class="text-soft">-</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-label="Statut">
                         {% if tax.is_active %}
                             <span class="badge bg-success">Actif</span>
                         {% else %}
                             <span class="badge bg-danger">Inactif</span>
                         {% endif %}
                     </td>
-                    <td class="text-end">
-                        <a href="{% url 'dashboard:tax_edit' tax.pk %}" class="btn-icon" title="Modifier"><i class="bi bi-pencil"></i></a>
-                        <a href="{% url 'dashboard:tax_delete' tax.pk %}" class="btn-icon text-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
+                    <td data-label="Actions">
+                        <div class="action-cell">
+                            <a href="{% url 'dashboard:tax_edit' tax.pk %}" class="btn-icon" title="Modifier"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'dashboard:tax_delete' tax.pk %}" class="btn-icon text-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}

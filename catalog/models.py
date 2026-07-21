@@ -191,7 +191,7 @@ class ProductVariant(models.Model):
     price_adjustment = models.DecimalField(
         max_digits=8, decimal_places=2, default=0,
         verbose_name="Ajustement de prix",
-        help_text="Montant à ajouter ou soustraire (ex: -500 pour -5,00 €)",
+        help_text="Montant à ajouter ou soustraire (ex: -500 pour -500 Ar)",
     )
     stock = models.PositiveIntegerField(default=0, verbose_name="Stock de la variante")
     is_active = models.BooleanField(default=True, verbose_name="Active")

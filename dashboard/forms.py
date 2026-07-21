@@ -240,8 +240,8 @@ class SiteConfigurationForm(forms.ModelForm):
             "tiktok_url": forms.URLInput(attrs={"class": "form-control"}),
             "meta_description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "meta_keywords": forms.TextInput(attrs={"class": "form-control"}),
-            "primary_color": forms.TextInput(attrs={"class": "form-control", "placeholder": "#0d6efd"}),
-            "secondary_color": forms.TextInput(attrs={"class": "form-control", "placeholder": "#6c757d"}),
+            "primary_color": forms.TextInput(attrs={"class": "form-control form-control-color", "type": "color", "placeholder": "#0d6efd"}),
+            "secondary_color": forms.TextInput(attrs={"class": "form-control form-control-color", "type": "color", "placeholder": "#6c757d"}),
             "footer_text": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
         }
 
@@ -310,9 +310,10 @@ class UserDashboardForm(forms.ModelForm):
 class PaymentMethodForm(forms.ModelForm):
     class Meta:
         model = PaymentMethod
-        fields = ["method", "phone_number", "is_active"]
+        fields = ["method", "name", "phone_number", "is_active"]
         widgets = {
             "method": forms.Select(attrs={"class": "form-select"}),
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ex: Jean Rakoto"}),
             "phone_number": forms.TextInput(attrs={"class": "form-control", "required": True, "placeholder": "+261 34 00 000 00"}),
             "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }

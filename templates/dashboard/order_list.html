@@ -45,21 +45,21 @@
                 <tbody>
                     {% for order in orders %}
                     <tr>
-                        <td><strong>#{{ order.id }}</strong></td>
-                        <td>{{ order.full_name }}</td>
-                        <td>
+                        <td data-label="N°"><strong>#{{ order.id }}</strong></td>
+                        <td data-label="Client">{{ order.full_name }}</td>
+                        <td data-label="Contact">
                             <small>{{ order.phone }}</small><br>
                             <small class="text-soft">{{ order.email|default:'' }}</small>
                         </td>
-                        <td><strong>{{ order.total_amount|floatformat:2 }} €</strong></td>
-                        <td>{{ order.item_count }}</td>
-                        <td>
+                        <td data-label="Montant"><strong>{{ order.total_amount|floatformat:0 }} Ar</strong></td>
+                        <td data-label="Articles">{{ order.item_count }}</td>
+                        <td data-label="Statut">
                             <span class="status-badge status-{{ order.status }}">
                                 {{ order.get_status_display }}
                             </span>
                         </td>
-                        <td class="text-soft">{{ order.created_at|date:"d/m/Y H:i" }}</td>
-                        <td>
+                        <td data-label="Date" class="text-soft">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                        <td data-label="Actions">
                             <div class="action-cell">
                                 <a href="{% url 'dashboard:order_detail' order.id %}" class="btn-icon" title="Détail">
                                     <i class="bi bi-eye"></i>

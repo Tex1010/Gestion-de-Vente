@@ -12,6 +12,7 @@ from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 
+from accounts.models import PasswordResetRequest
 from catalog.models import Banner, Category, Product
 from core.models import ActivityLog, Coupon, PaymentMethod, ShippingZone, SiteConfiguration, TaxRate
 from orders.models import Order
@@ -21,6 +22,7 @@ from .forms import (
     CategoryForm,
     CouponForm,
     DashboardAuthenticationForm,
+    PaymentMethodForm,
     ProductForm,
     ShippingZoneForm,
     SiteConfigurationForm,
@@ -729,6 +731,82 @@ def payment_delete(request, pk):
         "object": pm,
         "cancel_url": reverse_lazy("dashboard:payment_list"),
     })
+
+
+# ===== PASSWORD RESET REQUESTS =====
+
+@staff_required
+def password_reset_request_list(request):
+    """Liste des demandes de réinitialisation de mot de passe."""
+    requests = PasswordResetRequest.objects.select_related("user", "resolved_by").all()
+    pending = requests.filter(is_resolved=False).count()
+    resolved = requests.filter(is_resolved=True).count()
+    context = {
+        "requests": requests,
+        "summary": {
+            "total": requests.count(),
+            "pending": pending,
+            "resolved": resolved,
+        },
+    }
+    return render(request, "dashboard/password_reset_list.html", context)
+
+
+@staff_required
+def password_reset_send(request, pk):
+    """L'admin génère un nouveau mot de passe et l'envoie par email."""
+    from accounts.views import generate_random_password
+    from django.core.mail import send_mail
+    from django.utils import timezone
+
+    reset_req = get_object_or_404(PasswordResetRequest, pk=pk, is_resolved=False)
+
+    if not reset_req.user:
+        messages.error(request, "Aucun utilisateur associé à cette demande.")
+        return redirect("dashboard:password_reset_list")
+
+    # Générer un nouveau mot de passe
+    new_password = generate_random_password()
+    reset_req.user.set_password(new_password)
+    reset_req.user.save()
+
+    # Envoyer l'email
+    subject = f"Réinitialisation de votre mot de passe - {settings.SITE_NAME}"
+    message = (
+        f"Bonjour {reset_req.user.username},\n\n"
+        f"Votre demande de réinitialisation de mot de passe a été traitée.\n\n"
+        f"Voici votre nouveau mot de passe : {new_password}\n\n"
+        f"Vous pouvez vous connecter et le modifier dans votre profil.\n\n"
+        f"Cordialement,\n"
+        f"L'équipe {settings.SITE_NAME}"
+    )
+
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [reset_req.email],
+            fail_silently=False,
+        )
+        # Marquer comme résolue
+        reset_req.is_resolved = True
+        reset_req.resolved_at = timezone.now()
+        reset_req.resolved_by = request.user
+        reset_req.new_password = new_password
+        reset_req.save()
+        messages.success(
+            request,
+            f"Nouveau mot de passe envoyé à {reset_req.email}. "
+            f"Mot de passe généré : {new_password}",
+        )
+    except Exception as e:
+        messages.error(
+            request,
+            f"Erreur lors de l'envoi de l'email : {e}",
+        )
+
+    return redirect("dashboard:password_reset_list")
 
 
 # ===== BACKUP =====

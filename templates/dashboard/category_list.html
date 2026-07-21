@@ -34,7 +34,7 @@
             <tbody>
                 {% for cat in categories %}
                 <tr>
-                    <td>
+                    <td data-label="Nom">
                         <div class="d-flex align-items-center gap-2">
                             {% if cat.image %}
                             <img src="{{ cat.image.url }}" alt="{{ cat.name }}" style="width:36px;height:36px;object-fit:cover;border-radius:8px;">
@@ -42,17 +42,17 @@
                             <strong>{{ cat.name }}</strong>
                         </div>
                     </td>
-                    <td class="text-soft">{{ cat.slug }}</td>
-                    <td><strong>{{ cat.product_total }}</strong></td>
-                    <td><strong>{{ cat.active_product_total }}</strong></td>
-                    <td>
+                    <td data-label="Slug" class="text-soft">{{ cat.slug }}</td>
+                    <td data-label="Produits"><strong>{{ cat.product_total }}</strong></td>
+                    <td data-label="Actifs"><strong>{{ cat.active_product_total }}</strong></td>
+                    <td data-label="Statut">
                         {% if cat.is_active %}
                         <span class="badge bg-success">Active</span>
                         {% else %}
                         <span class="badge bg-secondary">Inactive</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-label="Actions">
                         <div class="action-cell">
                             <a href="{% url 'dashboard:category_edit' cat.id %}" class="btn-icon" title="Modifier">
                                 <i class="bi bi-pencil"></i>

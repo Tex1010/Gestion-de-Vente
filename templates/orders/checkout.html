@@ -25,30 +25,92 @@
                                 <div class="col-12 payment-section">
                                     {% if field.name == 'payment_method' %}
                                         <hr class="my-4">
-                                        <h2 class="h4 mb-4">Paiement en ligne</h2>
-                                        <div class="alert alert-info">
-                                            <i class="bi bi-info-circle me-2"></i>Sélectionnez votre mode de paiement, effectuez le transfert, puis saisissez la référence.
+                                        <h2 class="h4 mb-4">
+                                            <i class="bi bi-credit-card-2-front me-2"></i>Paiement en ligne
+                                        </h2>
+                                        <div class="alert alert-info d-flex align-items-center gap-2">
+                                            <i class="bi bi-info-circle flex-shrink-0"></i>
+                                            <div>Sélectionnez votre mode de paiement, effectuez le transfert vers le numéro correspondant, puis saisissez la référence.</div>
                                         </div>
+
+                                        <label class="form-label fw-semibold">{{ field.label }}</label>
+                                        <div class="row g-3" id="payment_method_cards">
+                                            {% for choice_value, choice_label in field.field.choices %}
+                                                {% if choice_value %}
+                                                    <div class="col-md-6">
+                                                        <label class="payment-card" for="pm_{{ choice_value }}">
+                                                            <input type="radio" name="payment_method" value="{{ choice_value }}" id="pm_{{ choice_value }}" class="payment-card-input"{% if field.value == choice_value %} checked{% endif %}>
+                                                            <div class="payment-card-body">
+                                                                <div class="payment-card-icon">
+                                                                    {% if choice_value == 'mvola' %}
+                                                                        <i class="bi bi-phone fs-2 text-success"></i>
+                                                                    {% elif choice_value == 'airtel_money' %}
+                                                                        <i class="bi bi-phone fs-2 text-danger"></i>
+                                                                    {% elif choice_value == 'orange_money' %}
+                                                                        <i class="bi bi-phone fs-2 text-warning"></i>
+                                                                    {% else %}
+                                                                        <i class="bi bi-credit-card fs-2"></i>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class="payment-card-info">
+                                                                    <strong class="payment-card-name">{{ choice_label }}</strong>
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        {% if field.errors %}
+                                            <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+                                        {% endif %}
                                     {% endif %}
-                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+
                                     {% if field.name == 'payment_phone' %}
-                                        <div id="payment_phone_container">
-                                            {{ field }}
+                                        <div class="mt-3" id="payment_phone_container">
+                                            <label class="form-label fw-semibold">{{ field.label }}</label>
+                                            <div class="input-group">
+                                                {{ field }}
+                                                <button type="button" class="btn btn-outline-primary" id="copyPhoneBtn" data-bs-toggle="tooltip" title="Copier le numéro">
+                                                    <i class="bi bi-clipboard"></i>
+                                                </button>
+                                            </div>
+                                            <div id="phone_display" class="mt-3 d-none">
+                                                <div class="payment-phone-card">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <div>
+                                                            <small class="text-muted">Envoyez le paiement à</small>
+                                                            <div class="payment-phone-number" id="phoneNumberDisplay"></div>
+                                                            <div class="payment-phone-name" id="phoneNameDisplay"></div>
+                                                        </div>
+                                                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" id="copyPhoneBtn2">
+                                                            <i class="bi bi-clipboard me-1"></i>Copier
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div id="phone_display" class="mt-2 text-primary fw-bold d-none"></div>
-                                    {% else %}
-                                        {{ field }}
+                                        {% if field.errors %}
+                                            <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+                                        {% endif %}
                                     {% endif %}
-                                    {% if field.help_text %}
-                                        <div class="form-text">{{ field.help_text }}</div>
-                                    {% endif %}
-                                    {% if field.errors %}
-                                        <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+
+                                    {% if field.name == 'payment_reference' %}
+                                        <div class="mt-3">
+                                            <label class="form-label fw-semibold">{{ field.label }}</label>
+                                            {{ field }}
+                                            {% if field.help_text %}
+                                                <div class="form-text">{{ field.help_text }}</div>
+                                            {% endif %}
+                                            {% if field.errors %}
+                                                <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+                                            {% endif %}
+                                        </div>
                                     {% endif %}
                                 </div>
                             {% elif field.name == 'notes' %}
                                 <div class="col-12">
-                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
                                     {{ field }}
                                     {% if field.errors %}
                                         <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
@@ -56,7 +118,7 @@
                                 </div>
                             {% else %}
                                 <div class="col-md-6">
-                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
                                     {{ field }}
                                     {% if field.errors %}
                                         <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
@@ -65,15 +127,19 @@
                             {% endif %}
                         {% endfor %}
                         <div class="col-12 d-grid d-md-flex gap-3 pt-2">
-                            <button class="btn btn-primary btn-lg px-4">Confirmer la commande</button>
-                            <a href="{% url 'orders:cart_detail' %}" class="btn btn-outline-dark btn-lg px-4">Modifier le panier</a>
+                            <button class="btn btn-primary btn-lg px-4 rounded-pill">
+                                <i class="bi bi-check2-circle me-2"></i>Confirmer la commande
+                            </button>
+                            <a href="{% url 'orders:cart_detail' %}" class="btn btn-outline-dark btn-lg px-4 rounded-pill">Modifier le panier</a>
                         </div>
                     </form>
                 </div>
             </div>
             <div class="col-lg-5">
                 <div class="content-panel p-4">
-                    <h2 class="h4 mb-4">Recapitulatif</h2>
+                    <h2 class="h4 mb-4">
+                        <i class="bi bi-cart-check me-2"></i>Recapitulatif
+                    </h2>
                     <div class="d-flex flex-column gap-3">
                         {% for item in cart %}
                             <div class="d-flex justify-content-between gap-3">
@@ -87,8 +153,8 @@
                     </div>
                     <hr class="my-4">
                     <div class="d-flex justify-content-between align-items-center">
-                        <span>Total a payer</span>
-                        <strong class="fs-4 text-primary">{{ cart_total }} Ar</strong>
+                        <span class="fs-5">Total a payer</span>
+                        <strong class="fs-3 text-primary">{{ cart_total }} Ar</strong>
                     </div>
                 </div>
             </div>
@@ -99,11 +165,155 @@
 
 {% block extra_css %}
 <style>
+/* Payment Section */
 .payment-section {
     background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 12px;
+    padding: 1.5rem;
+    border-radius: 16px;
     margin-bottom: 0.5rem;
+}
+
+/* Payment Method Cards */
+#payment_method_cards .payment-card {
+    display: block;
+    cursor: pointer;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.2s ease;
+    background: #fff;
+    height: 100%;
+}
+
+#payment_method_cards .payment-card:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 2px 12px rgba(13, 110, 253, 0.12);
+    transform: translateY(-2px);
+}
+
+#payment_method_cards .payment-card-input {
+    display: none;
+}
+
+#payment_method_cards .payment-card-input:checked + .payment-card-body {
+    border-color: transparent;
+}
+
+#payment_method_cards .payment-card-input:checked ~ .payment-card-body .payment-card-name {
+    color: #0d6efd;
+}
+
+#payment_method_cards .payment-card-input:checked + .payment-card-body {
+    border-color: transparent;
+}
+
+#payment_method_cards input[type="radio"]:checked + .payment-card-body {
+    position: relative;
+}
+
+#payment_method_cards input[type="radio"]:checked + .payment-card-body::before {
+    content: '\F26A';
+    font-family: 'bootstrap-icons';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #0d6efd;
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+#payment_method_cards .payment-card:has(input:checked) {
+    border-color: #0d6efd;
+    background: #f0f7ff;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+}
+
+#payment_method_cards .payment-card-body {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+}
+
+#payment_method_cards .payment-card-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+#payment_method_cards .payment-card-info {
+    min-width: 0;
+}
+
+#payment_method_cards .payment-card-name {
+    font-size: 0.9rem;
+    word-wrap: break-word;
+}
+
+/* Payment Phone Card */
+.payment-phone-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
+.payment-phone-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0d6efd;
+    letter-spacing: 0.5px;
+    font-family: 'Courier New', monospace;
+}
+
+.payment-phone-name {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+/* Copy button feedback */
+#copyPhoneBtn, #copyPhoneBtn2 {
+    transition: all 0.2s ease;
+}
+
+#copyPhoneBtn.copied, #copyPhoneBtn2.copied {
+    background: #198754;
+    border-color: #198754;
+    color: #fff;
+}
+
+/* Toast notification for copy */
+.copy-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #198754;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 9999;
+}
+
+.copy-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 </style>
 {% endblock %}
@@ -111,31 +321,164 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const methodSelect = document.getElementById('id_payment_method');
+    const methodRadios = document.querySelectorAll('input[name="payment_method"]');
     const phoneInput = document.getElementById('id_payment_phone');
     const phoneDisplay = document.getElementById('phone_display');
+    const phoneNumberDisplay = document.getElementById('phoneNumberDisplay');
+    const phoneNameDisplay = document.getElementById('phoneNameDisplay');
+    const copyBtn = document.getElementById('copyPhoneBtn');
+    const copyBtn2 = document.getElementById('copyPhoneBtn2');
+    const paymentRadios = document.querySelectorAll('.payment-card-input');
+    const checkoutForm = document.getElementById('checkoutForm');
 
-    // Map of payment method values to phone numbers from our choices
-    const phoneMap = {};
-    {% for pm in payment_methods %}
-    phoneMap['{{ pm.method }}'] = '{{ pm.phone_number }}';
-    {% endfor %}
+    // Payment methods data from server
+    const paymentData = {
+        {% for pm in payment_methods %}
+        '{{ pm.method }}': {
+            phone: '{{ pm.phone_number }}',
+            name: '{{ pm.name|escapejs }}',
+            label: '{{ pm.get_method_display|escapejs }}'
+        },
+        {% endfor %}
+    };
 
-    function updatePhone() {
-        const selected = methodSelect.value;
-        const phone = phoneMap[selected] || '';
-        phoneInput.value = phone;
-        if (phone && selected) {
-            phoneDisplay.textContent = 'Envoyez le paiement à ce numéro : ' + phone;
-            phoneDisplay.classList.remove('d-none');
+    function copyToClipboard(text) {
+        // Use modern clipboard API with fallback
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(function() {
+                showCopyToast('Numéro copié !');
+            }).catch(function() {
+                fallbackCopy(text);
+            });
         } else {
-            phoneDisplay.classList.add('d-none');
+            fallbackCopy(text);
         }
     }
 
-    methodSelect.addEventListener('change', updatePhone);
-    // Initialize on page load
-    updatePhone();
+    function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '0';
+        textarea.style.top = '0';
+        textarea.style.width = '2em';
+        textarea.style.height = '2em';
+        textarea.style.padding = '0';
+        textarea.style.border = 'none';
+        textarea.style.outline = 'none';
+        textarea.style.boxShadow = 'none';
+        textarea.style.background = 'transparent';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            showCopyToast('Numéro copié !');
+        } catch (e) {
+            showCopyToast('Erreur lors de la copie');
+        }
+        document.body.removeChild(textarea);
+    }
+
+    function showCopyToast(message) {
+        // Remove existing toast if any
+        const existing = document.querySelector('.copy-toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = 'copy-toast';
+        toast.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>' + message;
+        document.body.appendChild(toast);
+
+        requestAnimationFrame(() => {
+            toast.classList.add('show');
+        });
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    }
+
+    function animateCopyButton(btn) {
+        btn.classList.add('copied');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+
+        setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = originalHtml;
+        }, 2000);
+    }
+
+    function updatePhoneDisplay() {
+        const selected = document.querySelector('input[name="payment_method"]:checked');
+        if (!selected) {
+            phoneDisplay.classList.add('d-none');
+            phoneInput.value = '';
+            return;
+        }
+
+        const method = selected.value;
+        const data = paymentData[method];
+
+        if (data) {
+            phoneInput.value = data.phone;
+            phoneNumberDisplay.textContent = data.phone;
+            phoneNameDisplay.textContent = data.name ? 'Compte : ' + data.name : '';
+            phoneDisplay.classList.remove('d-none');
+        } else {
+            phoneDisplay.classList.add('d-none');
+            phoneInput.value = '';
+        }
+    }
+
+    // Update on radio change
+    methodRadios.forEach(function(radio) {
+        radio.addEventListener('change', updatePhoneDisplay);
+    });
+
+    // Also handle clicks on the card labels (in case they didn't trigger change)
+    paymentRadios.forEach(function(radio) {
+        radio.addEventListener('change', updatePhoneDisplay);
+    });
+
+    // Copy button handlers - more robust approach
+    function handleCopyClick(e) {
+        const phone = phoneNumberDisplay.textContent || phoneInput.value;
+        if (phone) {
+            copyToClipboard(phone);
+            animateCopyButton(e.currentTarget);
+        } else {
+            showCopyToast('Aucun numéro à copier');
+        }
+    }
+
+    if (copyBtn) {
+        copyBtn.addEventListener('click', handleCopyClick);
+    }
+    if (copyBtn2) {
+        copyBtn2.addEventListener('click', handleCopyClick);
+    }
+
+    // Initialize on page load - force update
+    function initPaymentDisplay() {
+        const checked = document.querySelector('input[name="payment_method"]:checked');
+        if (checked) {
+            updatePhoneDisplay();
+        } else if (paymentRadios.length > 0) {
+            // If no method is checked but methods exist, check first one
+            paymentRadios[0].checked = true;
+            updatePhoneDisplay();
+        }
+    }
+
+    // Run initialization after a small delay to ensure DOM is ready
+    if (document.readyState === 'complete') {
+        initPaymentDisplay();
+    } else {
+        window.addEventListener('load', initPaymentDisplay);
+    }
 });
 </script>
 {% endblock %}

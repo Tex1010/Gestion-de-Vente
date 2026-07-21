@@ -16,9 +16,9 @@
     <div class="stat-card green">
         <div class="stat-card-header">
             <p class="stat-card-label">Revenu total</p>
-            <i class="bi bi-currency-euro"></i>
+            <i class="bi bi-currency-exchange"></i>
         </div>
-        <p class="stat-card-value">{{ stats.revenue|floatformat:0 }} €</p>
+        <p class="stat-card-value">{{ stats.revenue|floatformat:0 }} Ar</p>
     </div>
     <div class="stat-card amber">
         <div class="stat-card-header">
@@ -75,7 +75,7 @@
                         <tr>
                             <td><strong>#{{ order.id }}</strong></td>
                             <td>{{ order.full_name }}</td>
-                            <td>{{ order.total_amount|floatformat:2 }} €</td>
+                            <td>{{ order.total_amount|floatformat:0 }} Ar</td>
                             <td>
                                 <span class="status-badge status-{{ order.status }}">
                                     {{ order.get_status_display }}

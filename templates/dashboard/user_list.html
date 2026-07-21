@@ -48,17 +48,17 @@
             <tbody>
                 {% for u in users %}
                 <tr>
-                    <td><strong>{{ u.username }}</strong></td>
-                    <td>{{ u.email|default:"-" }}</td>
-                    <td>{{ u.get_full_name|default:"-" }}</td>
-                    <td>
+                    <td data-label="Utilisateur"><strong>{{ u.username }}</strong></td>
+                    <td data-label="Email">{{ u.email|default:"-" }}</td>
+                    <td data-label="Nom complet">{{ u.get_full_name|default:"-" }}</td>
+                    <td data-label="Statut">
                         {% if u.is_active %}
                             <span class="badge bg-success">Actif</span>
                         {% else %}
                             <span class="badge bg-danger">Inactif</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-label="Rôle">
                         {% if u.is_superuser %}
                             <span class="badge bg-purple">Super Admin</span>
                         {% elif u.is_staff %}
@@ -67,10 +67,12 @@
                             <span class="badge bg-secondary">Client</span>
                         {% endif %}
                     </td>
-                    <td class="text-soft">{{ u.date_joined|date:"d/m/Y" }}</td>
-                    <td class="text-end">
-                        <a href="{% url 'dashboard:user_edit' u.pk %}" class="btn-icon" title="Modifier"><i class="bi bi-pencil"></i></a>
-                        <a href="{% url 'dashboard:user_delete' u.pk %}" class="btn-icon text-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
+                    <td data-label="Date" class="text-soft">{{ u.date_joined|date:"d/m/Y" }}</td>
+                    <td data-label="Actions">
+                        <div class="action-cell">
+                            <a href="{% url 'dashboard:user_edit' u.pk %}" class="btn-icon" title="Modifier"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'dashboard:user_delete' u.pk %}" class="btn-icon text-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}

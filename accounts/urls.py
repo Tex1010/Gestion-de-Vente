@@ -5,6 +5,8 @@ from .views import (
     login_view,
     logout_view,
     order_history,
+    password_reset_done_view,
+    password_reset_request_view,
     profile_view,
     register_view,
     wishlist_view,
@@ -37,36 +39,15 @@ urlpatterns = [
         ),
         name="password_change_done",
     ),
+    # Mot de passe oublié - approbation admin
     path(
         "mot-de-passe-oublie/",
-        auth_views.PasswordResetView.as_view(
-            template_name="accounts/password_reset.html",
-            email_template_name="accounts/password_reset_email.html",
-            subject_template_name="accounts/password_reset_subject.txt",
-            success_url="done/",
-        ),
+        password_reset_request_view,
         name="password_reset",
     ),
     path(
-        "mot-de-passe-oublie/done/",
-        auth_views.PasswordResetDoneView.as_view(
-            template_name="accounts/password_reset_done.html",
-        ),
+        "mot-de-passe-oublie/envoye/",
+        password_reset_done_view,
         name="password_reset_done",
-    ),
-    path(
-        "reinitialiser/<uidb64>/<token>/",
-        auth_views.PasswordResetConfirmView.as_view(
-            template_name="accounts/password_reset_confirm.html",
-            success_url="/compte/reinitialiser/done/",
-        ),
-        name="password_reset_confirm",
-    ),
-    path(
-        "reinitialiser/done/",
-        auth_views.PasswordResetCompleteView.as_view(
-            template_name="accounts/password_reset_complete.html",
-        ),
-        name="password_reset_complete",
     ),
 ]

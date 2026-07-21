@@ -57,7 +57,7 @@
                 <tbody>
                     {% for product in products %}
                     <tr>
-                        <td>
+                        <td data-label="Produit">
                             <div class="d-flex align-items-center gap-2">
                                 {% if product.image %}
                                 <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;">
@@ -75,15 +75,15 @@
                                 </div>
                             </div>
                         </td>
-                        <td><code class="text-muted">{{ product.sku|default:"—" }}</code></td>
-                        <td>{{ product.category.name }}</td>
-                        <td>
+                        <td data-label="SKU"><code class="text-muted">{{ product.sku|default:"—" }}</code></td>
+                        <td data-label="Catégorie">{{ product.category.name }}</td>
+                        <td data-label="Prix">
                             <strong>{{ product.price|floatformat:2 }} €</strong>
                             {% if product.old_price %}
                             <br><small class="text-decoration-line-through text-soft">{{ product.old_price|floatformat:2 }} €</small>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="Stock">
                             {% if product.stock == 0 %}
                             <span class="badge bg-danger">Rupture</span>
                             {% elif product.stock <= 5 %}
@@ -92,14 +92,14 @@
                             <span class="badge bg-success">{{ product.stock }}</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="Statut">
                             {% if product.is_active %}
                             <span class="badge bg-success">Actif</span>
                             {% else %}
                             <span class="badge bg-secondary">Inactif</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="Actions">
                             <div class="action-cell">
                                 <a href="{% url 'dashboard:product_edit' product.id %}" class="btn-icon" title="Modifier">
                                     <i class="bi bi-pencil"></i>

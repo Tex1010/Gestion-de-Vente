@@ -36,17 +36,17 @@
             <tbody>
                 {% for log in logs %}
                 <tr>
-                    <td class="text-soft" style="white-space:nowrap;">{{ log.created_at|date:"d/m/Y H:i" }}</td>
-                    <td>{{ log.user.username|default:"Système" }}</td>
-                    <td>
+                    <td data-label="Date" class="text-soft">{{ log.created_at|date:"d/m/Y H:i" }}</td>
+                    <td data-label="Utilisateur">{{ log.user.username|default:"Système" }}</td>
+                    <td data-label="Action">
                         <span class="badge {% if log.action == 'create' %}bg-success{% elif log.action == 'update' %}bg-primary{% elif log.action == 'delete' %}bg-danger{% elif log.action == 'login' %}bg-info{% elif log.action == 'order_status' %}bg-purple{% else %}bg-secondary{% endif %}">
                             {{ log.get_action_display }}
                         </span>
                     </td>
-                    <td>{{ log.model_name|default:"-" }}</td>
-                    <td>{{ log.object_repr|truncatewords:6|default:"-" }}</td>
-                    <td class="text-soft small">{{ log.details|truncatewords:10|default:"-" }}</td>
-                    <td class="text-soft small">{{ log.ip_address|default:"-" }}</td>
+                    <td data-label="Modèle">{{ log.model_name|default:"-" }}</td>
+                    <td data-label="Objet">{{ log.object_repr|truncatewords:6|default:"-" }}</td>
+                    <td data-label="Détails" class="text-soft small">{{ log.details|truncatewords:10|default:"-" }}</td>
+                    <td data-label="IP" class="text-soft small">{{ log.ip_address|default:"-" }}</td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="7"><div class="empty-state"><i class="bi bi-clock-history"></i><h6>Aucune activité</h6></div></td></tr>

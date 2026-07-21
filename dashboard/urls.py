@@ -24,6 +24,8 @@ from .views import (
     payment_delete,
     payment_edit,
     payment_list,
+    password_reset_request_list,
+    password_reset_send,
     product_create,
     product_delete,
     product_edit,
@@ -98,6 +100,9 @@ urlpatterns = [
     path("paiements/ajouter/", payment_create, name="payment_create"),
     path("paiements/<int:pk>/modifier/", payment_edit, name="payment_edit"),
     path("paiements/<int:pk>/supprimer/", payment_delete, name="payment_delete"),
+    # Password reset requests (admin)
+    path("reinitialisations/", password_reset_request_list, name="password_reset_list"),
+    path("reinitialisations/<int:pk>/envoyer/", password_reset_send, name="password_reset_send"),
     # Site settings
     path("site/", site_settings, name="site_settings"),
 ]

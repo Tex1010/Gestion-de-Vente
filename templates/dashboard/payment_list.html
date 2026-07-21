@@ -26,30 +26,34 @@
             <thead>
                 <tr>
                     <th>Méthode</th>
+                    <th>Nom du compte</th>
                     <th>Numéro</th>
                     <th>Statut</th>
                     <th></th>
                 </tr>
             </thead>
-            <tbody>
-                {% for method in methods %}
-                <tr>
-                    <td><strong>{{ method.get_method_display }}</strong></td>
-                    <td>{{ method.phone_number }}</td>
-                    <td>
-                        {% if method.is_active %}
-                            <span class="badge bg-success">Actif</span>
-                        {% else %}
-                            <span class="badge bg-danger">Inactif</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-end">
-                        <a href="{% url 'dashboard:payment_edit' method.pk %}" class="btn-icon" title="Modifier"><i class="bi bi-pencil"></i></a>
-                        <a href="{% url 'dashboard:payment_delete' method.pk %}" class="btn-icon text-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="4"><div class="empty-state"><i class="bi bi-credit-card"></i><h6>Aucun mode de paiement</h6></div></td></tr>
+                <tbody>
+                    {% for method in methods %}
+                    <tr>
+                        <td data-label="Méthode"><strong>{{ method.get_method_display }}</strong></td>
+                        <td data-label="Nom du compte">{{ method.name }}</td>
+                        <td data-label="Numéro">{{ method.phone_number }}</td>
+                        <td data-label="Statut">
+                            {% if method.is_active %}
+                                <span class="badge bg-success">Actif</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Actions" class="text-end">
+                            <div class="action-cell">
+                                <a href="{% url 'dashboard:payment_edit' method.pk %}" class="btn-icon" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                <a href="{% url 'dashboard:payment_delete' method.pk %}" class="btn-icon text-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5"><div class="empty-state"><i class="bi bi-credit-card"></i><h6>Aucun mode de paiement</h6></div></td></tr>
                 {% endfor %}
             </tbody>
         </table>

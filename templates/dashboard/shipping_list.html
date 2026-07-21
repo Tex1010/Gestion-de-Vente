@@ -36,22 +36,24 @@
             <tbody>
                 {% for zone in shipping_zones %}
                 <tr>
-                    <td><strong>{{ zone.name }}</strong></td>
-                    <td class="text-soft">{{ zone.cities|truncatewords:8|default:"-" }}</td>
-                    <td>{{ zone.base_cost|floatformat:0 }} Ar</td>
-                    <td>{% if zone.free_shipping_min %}&ge; {{ zone.free_shipping_min|floatformat:0 }} Ar{% else %}-{% endif %}</td>
-                    <td>{{ zone.estimated_days|default:"-" }}</td>
-                    <td>{{ zone.order }}</td>
-                    <td>
+                    <td data-label="Zone"><strong>{{ zone.name }}</strong></td>
+                    <td data-label="Villes" class="text-soft">{{ zone.cities|truncatewords:8|default:"-" }}</td>
+                    <td data-label="Frais de base">{{ zone.base_cost|floatformat:0 }} Ar</td>
+                    <td data-label="Livraison offerte">{% if zone.free_shipping_min %}&ge; {{ zone.free_shipping_min|floatformat:0 }} Ar{% else %}-{% endif %}</td>
+                    <td data-label="Délai">{{ zone.estimated_days|default:"-" }}</td>
+                    <td data-label="Ordre">{{ zone.order }}</td>
+                    <td data-label="Statut">
                         {% if zone.is_active %}
                             <span class="badge bg-success">Active</span>
                         {% else %}
                             <span class="badge bg-danger">Inactive</span>
                         {% endif %}
                     </td>
-                    <td class="text-end">
-                        <a href="{% url 'dashboard:shipping_edit' zone.pk %}" class="btn-icon" title="Modifier"><i class="bi bi-pencil"></i></a>
-                        <a href="{% url 'dashboard:shipping_delete' zone.pk %}" class="btn-icon text-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
+                    <td data-label="Actions">
+                        <div class="action-cell">
+                            <a href="{% url 'dashboard:shipping_edit' zone.pk %}" class="btn-icon" title="Modifier"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'dashboard:shipping_delete' zone.pk %}" class="btn-icon text-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}

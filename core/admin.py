@@ -102,6 +102,6 @@ class ActivityLogAdmin(admin.ModelAdmin):
 
 @admin.register(PaymentMethod)
 class PaymentMethodAdmin(admin.ModelAdmin):
-    list_display = ["method", "phone_number", "is_active"]
+    list_display = ["method", "name", "phone_number", "is_active"]
     list_editable = ["phone_number", "is_active"]
-    search_fields = ["method", "phone_number"]
+    search_fields = ["method", "phone_number", "name"]

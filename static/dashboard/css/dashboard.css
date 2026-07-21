@@ -904,29 +904,170 @@
   border-color: var(--db-primary);
 }
 
+/* ===== RESPONSIVE TABLES → CARDS ===== */
+@media (max-width: 767.98px) {
+  .table-db,
+  .table-db thead,
+  .table-db tbody,
+  .table-db th,
+  .table-db td,
+  .table-db tr {
+    display: block;
+  }
+
+  .table-db thead {
+    display: none;
+  }
+
+  .table-db tr {
+    background: var(--db-surface);
+    border: 1px solid var(--db-border);
+    border-radius: var(--db-radius);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    box-shadow: var(--db-shadow);
+  }
+
+  .table-db td {
+    padding: 0.4rem 0;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+  }
+
+  .table-db td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    width: 110px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--db-text-soft);
+  }
+
+  .table-db td:last-child {
+    border-bottom: none;
+  }
+
+  .table-db .action-cell {
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+  }
+
+  .search-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-form input,
+  .search-form select {
+    width: 100% !important;
+    min-width: unset;
+  }
+}
+
+/* ===== SIDEBAR TOGGLE BUTTON ===== */
+.sidebar-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: var(--db-radius-sm);
+  color: var(--db-text);
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all var(--db-transition);
+  flex-shrink: 0;
+}
+
+.sidebar-toggle:hover {
+  background: var(--db-primary-light);
+  color: var(--db-primary);
+  border-color: var(--db-primary);
+}
+
+/* ===== SIDEBAR OVERLAY ===== */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+body.sidebar-overlay-active .sidebar-overlay {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 991.98px) {
+  .sidebar-toggle {
+    display: flex;
+  }
+
   .dashboard-shell {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    height: 100vh;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
   }
 
   .dashboard-main {
+    width: 100%;
     padding: 1rem;
   }
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  
+  .topbar {
+    flex-wrap: wrap;
+  }
+
+  /* Product grid single column on very small screens */
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Order meta grid */
+  .order-meta-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 575.98px) {
   .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .order-meta-grid {
     grid-template-columns: 1fr;
   }
 
@@ -939,4 +1080,19 @@
     flex-direction: column;
     align-items: flex-start;
   }
+  
+  .dashboard-main {
+    padding: 0.75rem;
+  }
+  
+  .card-panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .card-panel-header .d-flex {
+    width: 100%;
+    justify-content: flex-start !important;
+  }
 }
+

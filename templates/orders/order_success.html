@@ -16,8 +16,11 @@
             {% if order.payment_method %}
             <div class="alert alert-info mt-4">
                 <i class="bi bi-credit-card me-2"></i>
-                <strong>Paiement :</strong> {{ order.get_payment_method_display }} -
-                Référence : <strong>{{ order.payment_reference }}</strong>
+                <strong>Paiement :</strong> {{ order.get_payment_method_display }}
+                {% if order.payment_phone %}
+                — <strong>Numéro :</strong> {{ order.payment_phone }}
+                {% endif %}
+                — <strong>Référence :</strong> {{ order.payment_reference }}
             </div>
             {% endif %}
             <div class="d-flex flex-wrap justify-content-center gap-3">

@@ -158,6 +158,21 @@ def checkout(request):
     if request.method == "POST":
         form = CheckoutForm(request.POST)
         if form.is_valid():
+            # Get the phone number from the selected PaymentMethod server-side
+            payment_method_key = form.cleaned_data["payment_method"]
+            payment_method_obj = None
+            payment_phone = form.cleaned_data.get("payment_phone", "")
+            
+            # If payment_phone is empty, try to get it from the database
+            if not payment_phone:
+                try:
+                    payment_method_obj = PaymentMethod.objects.get(
+                        method=payment_method_key, is_active=True
+                    )
+                    payment_phone = payment_method_obj.phone_number
+                except PaymentMethod.DoesNotExist:
+                    pass
+
             with transaction.atomic():
                 order = Order.objects.create(
                     user=request.user,
@@ -167,8 +182,8 @@ def checkout(request):
                     city=form.cleaned_data["city"],
                     address=form.cleaned_data["address"],
                     notes=form.cleaned_data["notes"],
-                    payment_method=form.cleaned_data["payment_method"],
-                    payment_phone=form.cleaned_data.get("payment_phone", ""),
+                    payment_method=payment_method_key,
+                    payment_phone=payment_phone,
                     payment_reference=form.cleaned_data["payment_reference"],
                 )
                 for item in cart_items:

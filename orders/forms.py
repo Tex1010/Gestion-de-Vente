@@ -39,7 +39,7 @@ class CheckoutForm(forms.Form):
         payment_choices = [("", "Choisir un mode de paiement")]
         try:
             payment_choices += [
-                (pm.method, f"{pm.get_method_display()} - {pm.phone_number}")
+                (pm.method, f"{pm.get_method_display()} - {pm.name or pm.phone_number}")
                 for pm in PaymentMethod.objects.filter(is_active=True)
             ]
         except Exception:

@@ -40,23 +40,25 @@
             <tbody>
                 {% for coupon in coupons %}
                 <tr>
-                    <td><strong>{{ coupon.code }}</strong></td>
-                    <td>{{ coupon.get_discount_type_display }}</td>
-                    <td>{{ coupon.discount_value }}{% if coupon.discount_type == 'percentage' %}%{% else %} Ar{% endif %}</td>
-                    <td>{{ coupon.min_order_amount|floatformat:0 }} Ar</td>
-                    <td>{{ coupon.current_uses }}{% if coupon.max_uses > 0 %}/{{ coupon.max_uses }}{% endif %}</td>
-                    <td class="text-soft">{{ coupon.valid_from|date:"d/m/Y H:i" }}</td>
-                    <td class="text-soft">{{ coupon.valid_to|date:"d/m/Y H:i" }}</td>
-                    <td>
+                    <td data-label="Code"><strong>{{ coupon.code }}</strong></td>
+                    <td data-label="Type">{{ coupon.get_discount_type_display }}</td>
+                    <td data-label="Valeur">{{ coupon.discount_value }}{% if coupon.discount_type == 'percentage' %}%{% else %} Ar{% endif %}</td>
+                    <td data-label="Min. commande">{{ coupon.min_order_amount|floatformat:0 }} Ar</td>
+                    <td data-label="Utilisations">{{ coupon.current_uses }}{% if coupon.max_uses > 0 %}/{{ coupon.max_uses }}{% endif %}</td>
+                    <td data-label="Valable du" class="text-soft">{{ coupon.valid_from|date:"d/m/Y H:i" }}</td>
+                    <td data-label="Au" class="text-soft">{{ coupon.valid_to|date:"d/m/Y H:i" }}</td>
+                    <td data-label="Statut">
                         {% if coupon.is_valid %}
                             <span class="badge bg-success">Valide</span>
                         {% else %}
                             <span class="badge bg-danger">Invalide</span>
                         {% endif %}
                     </td>
-                    <td class="text-end">
-                        <a href="{% url 'dashboard:coupon_edit' coupon.pk %}" class="btn-icon" title="Modifier"><i class="bi bi-pencil"></i></a>
-                        <a href="{% url 'dashboard:coupon_delete' coupon.pk %}" class="btn-icon text-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
+                    <td data-label="Actions">
+                        <div class="action-cell">
+                            <a href="{% url 'dashboard:coupon_edit' coupon.pk %}" class="btn-icon" title="Modifier"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'dashboard:coupon_delete' coupon.pk %}" class="btn-icon text-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}

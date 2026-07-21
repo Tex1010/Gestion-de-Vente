@@ -331,6 +331,12 @@ class PaymentMethod(models.Model):
         unique=True,
         verbose_name="Méthode de paiement",
     )
+    name = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name="Nom du compte",
+        help_text="Nom du titulaire du compte (ex: Jean Rakoto)",
+    )
     phone_number = models.CharField(max_length=20, verbose_name="Numéro de téléphone")
     is_active = models.BooleanField(default=True, verbose_name="Actif")
     created_at = models.DateTimeField(auto_now_add=True)
