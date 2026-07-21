@@ -3,6 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 
 from catalog.models import Banner, Category, Product, ProductImage, ProductVariant
+from core.models import SiteConfiguration
 
 
 class DashboardAuthenticationForm(AuthenticationForm):
@@ -178,4 +179,67 @@ class BannerForm(forms.ModelForm):
             "position": forms.Select(attrs={"class": "form-select"}),
             "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
             "order": forms.NumberInput(attrs={"class": "form-control", "min": 0}),
+        }
+
+
+class SiteConfigurationForm(forms.ModelForm):
+    class Meta:
+        model = SiteConfiguration
+        fields = [
+            # Identité
+            "site_name",
+            "site_tagline",
+            "logo",
+            "favicon",
+            # Hero
+            "hero_title",
+            "hero_subtitle",
+            # À propos
+            "about_title",
+            "about_content",
+            "about_image",
+            # Contact
+            "contact_phone",
+            "contact_email",
+            "address",
+            "opening_hours",
+            # Réseaux sociaux / raccourcis
+            "whatsapp_url",
+            "facebook_url",
+            "instagram_url",
+            "telegram_url",
+            "tiktok_url",
+            # SEO
+            "meta_description",
+            "meta_keywords",
+            # Couleurs
+            "primary_color",
+            "secondary_color",
+            # Footer
+            "footer_text",
+        ]
+        widgets = {
+            "site_name": forms.TextInput(attrs={"class": "form-control", "required": True}),
+            "site_tagline": forms.TextInput(attrs={"class": "form-control"}),
+            "logo": forms.FileInput(attrs={"class": "form-control", "accept": "image/*"}),
+            "favicon": forms.FileInput(attrs={"class": "form-control", "accept": "image/*"}),
+            "hero_title": forms.TextInput(attrs={"class": "form-control"}),
+            "hero_subtitle": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "about_title": forms.TextInput(attrs={"class": "form-control"}),
+            "about_content": forms.Textarea(attrs={"class": "form-control", "rows": 6}),
+            "about_image": forms.FileInput(attrs={"class": "form-control", "accept": "image/*"}),
+            "contact_phone": forms.TextInput(attrs={"class": "form-control"}),
+            "contact_email": forms.EmailInput(attrs={"class": "form-control"}),
+            "address": forms.TextInput(attrs={"class": "form-control"}),
+            "opening_hours": forms.TextInput(attrs={"class": "form-control"}),
+            "whatsapp_url": forms.URLInput(attrs={"class": "form-control"}),
+            "facebook_url": forms.URLInput(attrs={"class": "form-control"}),
+            "instagram_url": forms.URLInput(attrs={"class": "form-control"}),
+            "telegram_url": forms.URLInput(attrs={"class": "form-control"}),
+            "tiktok_url": forms.URLInput(attrs={"class": "form-control"}),
+            "meta_description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "meta_keywords": forms.TextInput(attrs={"class": "form-control"}),
+            "primary_color": forms.TextInput(attrs={"class": "form-control", "placeholder": "#0d6efd"}),
+            "secondary_color": forms.TextInput(attrs={"class": "form-control", "placeholder": "#6c757d"}),
+            "footer_text": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
         }

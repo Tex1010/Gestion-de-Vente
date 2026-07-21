@@ -1,9 +1,11 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from catalog.models import Product
+from catalog.models import Product, ProductVariant
 
 from .cart import Cart
 from .forms import CheckoutForm
@@ -15,6 +17,24 @@ def _parse_quantity(raw_value):
         return max(int(raw_value), 1)
     except (TypeError, ValueError):
         return 1
+
+
+def _get_variant(product, raw_variant_id):
+    if not raw_variant_id:
+        return None
+    return get_object_or_404(
+        ProductVariant,
+        pk=raw_variant_id,
+        product=product,
+        is_active=True,
+    )
+
+
+def _get_user_order_queryset(user):
+    filters = Q(user=user)
+    if user.email:
+        filters |= Q(user__isnull=True, email=user.email)
+    return Order.objects.filter(filters)
 
 
 def cart_detail(request):
@@ -31,37 +51,84 @@ def cart_detail(request):
 
 @require_POST
 def cart_add(request, product_id):
-    product = get_object_or_404(Product, pk=product_id, is_active=True)
-    if product.stock <= 0:
+    product = get_object_or_404(
+        Product.objects.prefetch_related("variants"),
+        pk=product_id,
+        is_active=True,
+    )
+    variant = _get_variant(product, request.POST.get("variant_id"))
+
+    has_selectable_variants = product.variants.filter(is_active=True, stock__gt=0).exists()
+    if has_selectable_variants and variant is None:
+        messages.info(
+            request,
+            "Veuillez choisir une variante avant d'ajouter ce produit au panier.",
+        )
+        return redirect("catalog:product_detail", slug=product.slug)
+
+    available_stock = variant.stock if variant else product.stock
+    if available_stock <= 0:
         messages.error(request, f"{product.name} est actuellement en rupture de stock.")
-        return redirect(request.POST.get("next") or "core:home")
+        return redirect(request.POST.get("next") or "catalog:product_detail", slug=product.slug)
+
     quantity = _parse_quantity(request.POST.get("quantity", 1))
-    Cart(request).add(product=product, quantity=quantity)
-    messages.success(request, f"{product.name} a ete ajoute au panier.")
+    Cart(request).add(product=product, quantity=quantity, variant=variant)
+    if variant:
+        messages.success(request, f"{product.name} ({variant.name}) a ete ajoute au panier.")
+    else:
+        messages.success(request, f"{product.name} a ete ajoute au panier.")
     return redirect(request.POST.get("next") or "orders:cart_detail")
 
 
 @require_POST
-def cart_update(request, product_id):
-    product = get_object_or_404(Product, pk=product_id, is_active=True)
-    if product.stock <= 0:
-        Cart(request).remove(product)
+def cart_update(request, item_key):
+    cart = Cart(request)
+    item = cart.cart.get(item_key)
+    if not item:
+        messages.warning(request, "Cet article n'est plus dans votre panier.")
+        return redirect("orders:cart_detail")
+
+    product = get_object_or_404(Product, pk=item["product_id"], is_active=True)
+    variant = _get_variant(product, item.get("variant_id"))
+    available_stock = variant.stock if variant else product.stock
+    if available_stock <= 0:
+        cart.remove(item_key)
         messages.error(request, f"{product.name} n'est plus disponible.")
         return redirect("orders:cart_detail")
+
     quantity = _parse_quantity(request.POST.get("quantity", 1))
-    Cart(request).add(product=product, quantity=quantity, override_quantity=True)
-    messages.success(request, f"Quantite mise a jour pour {product.name}.")
+    cart.add(
+        product=product,
+        quantity=quantity,
+        override_quantity=True,
+        variant=variant,
+    )
+    if variant:
+        messages.success(request, f"Quantite mise a jour pour {product.name} ({variant.name}).")
+    else:
+        messages.success(request, f"Quantite mise a jour pour {product.name}.")
     return redirect("orders:cart_detail")
 
 
 @require_POST
-def cart_remove(request, product_id):
-    product = get_object_or_404(Product, pk=product_id)
-    Cart(request).remove(product)
-    messages.info(request, f"{product.name} a ete retire du panier.")
+def cart_remove(request, item_key):
+    cart = Cart(request)
+    item = cart.cart.get(item_key)
+    if not item:
+        messages.warning(request, "Cet article n'est plus dans votre panier.")
+        return redirect("orders:cart_detail")
+
+    product = get_object_or_404(Product, pk=item["product_id"])
+    variant = _get_variant(product, item.get("variant_id"))
+    cart.remove(item_key)
+    if variant:
+        messages.info(request, f"{product.name} ({variant.name}) a ete retire du panier.")
+    else:
+        messages.info(request, f"{product.name} a ete retire du panier.")
     return redirect("orders:cart_detail")
 
 
+@login_required
 def checkout(request):
     cart = Cart(request)
     cart_items = list(cart)
@@ -72,8 +139,11 @@ def checkout(request):
     stock_issues = []
     for item in cart_items:
         product = get_object_or_404(Product, pk=item["product_id"], is_active=True)
-        if product.stock < item["quantity"]:
-            stock_issues.append(product.name)
+        variant = _get_variant(product, item.get("variant_id"))
+        available_stock = variant.stock if variant else product.stock
+        if available_stock < item["quantity"]:
+            label = f"{product.name} ({variant.name})" if variant else product.name
+            stock_issues.append(label)
 
     if stock_issues:
         messages.warning(
@@ -86,16 +156,29 @@ def checkout(request):
         form = CheckoutForm(request.POST)
         if form.is_valid():
             with transaction.atomic():
-                order = Order.objects.create(**form.cleaned_data)
+                order = Order.objects.create(user=request.user, **form.cleaned_data)
                 for item in cart_items:
                     product = Product.objects.select_for_update().get(pk=item["product_id"])
+                    variant = None
+                    if item.get("variant_id"):
+                        variant = ProductVariant.objects.select_for_update().get(
+                            pk=item["variant_id"],
+                            product=product,
+                            is_active=True,
+                        )
+                    unit_price = variant.effective_price if variant else product.price
                     OrderItem.objects.create(
                         order=order,
                         product=product,
+                        variant=variant,
                         product_name=product.name,
+                        variant_name=variant.name if variant else "",
                         quantity=item["quantity"],
-                        unit_price=product.price,
+                        unit_price=unit_price,
                     )
+                    if variant:
+                        variant.stock = max(variant.stock - item["quantity"], 0)
+                        variant.save(update_fields=["stock"])
                     product.stock = max(product.stock - item["quantity"], 0)
                     product.save(update_fields=["stock"])
                 order.recalculate_total()
@@ -103,7 +186,14 @@ def checkout(request):
             messages.success(request, "Votre commande a ete enregistree avec succes.")
             return redirect("orders:order_success", order_id=order.pk)
     else:
-        form = CheckoutForm()
+        initial = {
+            "full_name": request.user.get_full_name() or request.user.username,
+            "phone": getattr(request.user.profile, "phone", ""),
+            "email": request.user.email,
+            "city": getattr(request.user.profile, "city", ""),
+            "address": getattr(request.user.profile, "address", ""),
+        }
+        form = CheckoutForm(initial=initial)
 
     return render(
         request,
@@ -116,6 +206,13 @@ def checkout(request):
     )
 
 
+@login_required
 def order_success(request, order_id):
-    order = get_object_or_404(Order, pk=order_id)
+    if request.user.is_staff:
+        order = get_object_or_404(Order.objects.prefetch_related("items__variant"), pk=order_id)
+    else:
+        order = get_object_or_404(
+            _get_user_order_queryset(request.user).prefetch_related("items__variant"),
+            pk=order_id,
+        )
     return render(request, "orders/order_success.html", {"order": order})

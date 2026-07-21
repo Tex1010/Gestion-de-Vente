@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 
 from catalog.models import Banner, Category, Product
+from core.models import SiteConfiguration
 from orders.models import Order
 
 from .forms import (
@@ -15,6 +16,7 @@ from .forms import (
     CategoryForm,
     DashboardAuthenticationForm,
     ProductForm,
+    SiteConfigurationForm,
 )
 
 
@@ -61,6 +63,7 @@ def dashboard_home(request):
         "pending": orders.filter(status=Order.STATUS_PENDING).count(),
         "confirmed": orders.filter(status=Order.STATUS_CONFIRMED).count(),
         "preparing": orders.filter(status=Order.STATUS_PREPARING).count(),
+        "shipped": orders.filter(status=Order.STATUS_SHIPPED).count(),
         "delivered": orders.filter(status=Order.STATUS_DELIVERED).count(),
         "cancelled": orders.filter(status=Order.STATUS_CANCELLED).count(),
     }
@@ -372,3 +375,21 @@ def banner_delete(request, pk):
         "object": banner,
         "cancel_url": reverse_lazy("dashboard:banner_list"),
     })
+
+
+# ===== SITE SETTINGS =====
+
+@staff_required
+def site_settings(request):
+    config = SiteConfiguration.load()
+
+    if request.method == "POST":
+        form = SiteConfigurationForm(request.POST, request.FILES, instance=config)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Configuration du site mise à jour.")
+            return redirect("dashboard:site_settings")
+    else:
+        form = SiteConfigurationForm(instance=config)
+
+    return render(request, "dashboard/site_settings.html", {"form": form})

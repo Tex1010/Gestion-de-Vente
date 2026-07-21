@@ -18,6 +18,7 @@ from .views import (
     product_delete,
     product_edit,
     product_list,
+    site_settings,
 )
 
 app_name = "dashboard"
@@ -46,4 +47,6 @@ urlpatterns = [
     path("bannieres/ajouter/", banner_create, name="banner_create"),
     path("bannieres/<int:pk>/modifier/", banner_edit, name="banner_edit"),
     path("bannieres/<int:pk>/supprimer/", banner_delete, name="banner_delete"),
+    # Site settings
+    path("site/", site_settings, name="site_settings"),
 ]

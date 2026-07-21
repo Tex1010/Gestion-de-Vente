@@ -708,8 +708,17 @@
 .status-pending { background: #fef3c7; color: #92400e; }
 .status-confirmed { background: #dbeafe; color: #1e40af; }
 .status-preparing { background: #ede9fe; color: #5b21b6; }
+.status-shipped { background: #cffafe; color: #155e75; }
 .status-delivered { background: #d1fae5; color: #065f46; }
 .status-cancelled { background: #fee2e2; color: #991b1b; }
+
+/* Subtle backgrounds (utilisés dans le dashboard) */
+.bg-amber-subtle { background: #fffbeb; }
+.bg-blue-subtle { background: #eff6ff; }
+.bg-purple-subtle { background: #f5f3ff; }
+.bg-cyan-subtle { background: #ecfeff; }
+.bg-green-subtle { background: #ecfdf5; }
+.bg-red-subtle { background: #fef2f2; }
 
 /* ===== EMPTY STATE ===== */
 .empty-state {

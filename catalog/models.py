@@ -206,6 +206,10 @@ class ProductVariant(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.name}"
 
+    @property
+    def effective_price(self):
+        return self.product.price + self.price_adjustment
+
 
 class Banner(models.Model):
     """Bannière publicitaire / Slider de la page d'accueil."""

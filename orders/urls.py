@@ -14,8 +14,8 @@ app_name = "orders"
 urlpatterns = [
     path("panier/", cart_detail, name="cart_detail"),
     path("panier/ajouter/<int:product_id>/", cart_add, name="cart_add"),
-    path("panier/modifier/<int:product_id>/", cart_update, name="cart_update"),
-    path("panier/supprimer/<int:product_id>/", cart_remove, name="cart_remove"),
+    path("panier/modifier/<str:item_key>/", cart_update, name="cart_update"),
+    path("panier/supprimer/<str:item_key>/", cart_remove, name="cart_remove"),
     path("commande/", checkout, name="checkout"),
     path("commande/succes/<int:order_id>/", order_success, name="order_success"),
 ]
