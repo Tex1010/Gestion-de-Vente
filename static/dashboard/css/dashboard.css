@@ -976,42 +976,25 @@
   height: 40px;
   align-items: center;
   justify-content: center;
-  border: none;
-  background: var(--db-surface);
-  border: 1px solid var(--db-border);
+  border: 0;
+  background: var(--db-primary);
   border-radius: var(--db-radius-sm);
-  color: var(--db-text);
+  color: #fff;
   font-size: 1.3rem;
   cursor: pointer;
   transition: all var(--db-transition);
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  margin-bottom: 0.75rem;
 }
 
 .sidebar-toggle:hover {
-  background: var(--db-primary-light);
-  color: var(--db-primary);
-  border-color: var(--db-primary);
-}
-
-/* Fixed toggle button visible on mobile/tablet when scrolling */
-.sidebar-toggle.fixed-toggle {
-  position: fixed;
-  top: 0.75rem;
-  left: 0.75rem;
-  z-index: 1000;
-  background: var(--db-primary);
-  color: #fff;
-  border-color: var(--db-primary);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
-}
-
-.sidebar-toggle.fixed-toggle:hover {
   background: var(--db-primary-hover);
   color: #fff;
 }
 
-body.sidebar-overlay-active .sidebar-toggle.fixed-toggle {
-  z-index: 1000;
+body.sidebar-overlay-active .sidebar-toggle {
+  z-index: 1001;
 }
 
 /* ===== SIDEBAR OVERLAY ===== */
