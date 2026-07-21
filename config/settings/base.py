@@ -39,6 +39,7 @@ MIDDLEWARE = [
     "dashboard.middleware.SeparateDashboardSession",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "dashboard.middleware.NoCacheStaffMiddleware",
 ]
 
 
@@ -108,8 +109,13 @@ MEDIA_ROOT = BASE_DIR / "media"
 SITE_NAME = "CVB Store"
 
 LOGIN_URL = "accounts:login"
-LOGIN_REDIRECT_URL = "accounts:profile"
-LOGOUT_REDIRECT_URL = "core:home"
+LOGIN_REDIRECT_URL = "core:home"
+LOGOUT_REDIRECT_URL = "accounts:login"
+
+# Dashboard authentication settings
+DASHBOARD_LOGIN_URL = "dashboard:login"
+DASHBOARD_LOGIN_REDIRECT_URL = "dashboard:index"
+DASHBOARD_LOGOUT_REDIRECT_URL = "dashboard:login"
 
 # Email (Console en dev, SMTP en prod)
 EMAIL_BACKEND = os.getenv(
@@ -129,7 +135,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_HTTPONLY = True
 X_FRAME_OPTIONS = "DENY"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
+
+# Empêcher le cache navigateur des pages protégées
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True

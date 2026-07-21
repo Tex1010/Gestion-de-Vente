@@ -73,7 +73,7 @@ def login_view(request):
 
 
 def logout_view(request):
-    """Déconnexion."""
+    """Déconnexion. Redirige vers la page de connexion client."""
     logout(request)
     messages.info(request, "Vous êtes déconnecté.")
     return redirect("accounts:login")
