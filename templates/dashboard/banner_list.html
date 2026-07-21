@@ -1,0 +1,98 @@
+ru{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Bannières et Sliders{% endblock %}
+{% block page_title %}Gestion des bannières et sliders{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+    <div class="card-panel-header">
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <span class="badge bg-secondary me-2">{{ summary.total }} bannière{{ summary.total|pluralize }}</span>
+            <span class="badge bg-success">{{ summary.active }} active{{ summary.active|pluralize }}</span>
+            <span class="badge bg-info">{{ summary.hero }} principale{{ summary.hero|pluralize }}</span>
+        </div>
+        <div class="btn-group-db">
+            <a href="{% url 'dashboard:banner_create' %}" class="btn-db-primary">
+                <i class="bi bi-plus-lg"></i> Nouvelle bannière
+            </a>
+        </div>
+    </div>
+    <div class="card-panel-body">
+        {% if banners %}
+        <div class="table-responsive">
+            <table class="table-db">
+                <thead>
+                    <tr>
+                        <th>Aperçu</th>
+                        <th>Titre</th>
+                        <th>Position</th>
+                        <th>Ordre</th>
+                        <th>Statut</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for banner in banners %}
+                    <tr>
+                        <td>
+                            <div style="width:80px;height:50px;border-radius:6px;overflow:hidden;background:#f1f5f9;">
+                                {% if banner.image %}
+                                <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Bannière' }}" style="width:100%;height:100%;object-fit:cover;">
+                                {% else %}
+                                <div style="display:flex;align-items:center;justify-content:center;height:100%;">
+                                    <i class="bi bi-image text-soft"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <strong>{{ banner.title|default:"<em>Sans titre</em>" }}</strong>
+                            {% if banner.subtitle %}
+                            <br><small class="text-muted">{{ banner.subtitle|truncatewords:8 }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if banner.position == 'hero' %}
+                            <span class="badge bg-primary">Principale</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Secondaire</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ banner.order }}</td>
+                        <td>
+                            {% if banner.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-cell">
+                                <a href="{% url 'dashboard:banner_edit' banner.id %}" class="btn-icon" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'dashboard:banner_delete' banner.id %}" class="btn-icon danger" title="Supprimer" onclick="return confirm('Supprimer cette bannière ?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-images"></i>
+            <h6>Aucune bannière</h6>
+            <p class="mb-0">Créez des bannières pour animer votre page d'accueil.</p>
+            <a href="{% url 'dashboard:banner_create' %}" class="btn-db-primary mt-3">
+                <i class="bi bi-plus-lg"></i> Ajouter une bannière
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+</write_to_file>

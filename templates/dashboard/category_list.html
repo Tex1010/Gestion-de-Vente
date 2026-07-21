@@ -1,0 +1,81 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Catégories{% endblock %}
+{% block page_title %}Gestion des catégories{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+    <div class="card-panel-header">
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <span class="badge bg-secondary me-2">{{ summary.total }} catégorie{{ summary.total|pluralize }}</span>
+            <span class="badge bg-success">{{ summary.active }} active{{ summary.active|pluralize }}</span>
+            <span class="badge bg-secondary">{{ summary.inactive }} inactive{{ summary.inactive|pluralize }}</span>
+        </div>
+        <div class="btn-group-db">
+            <a href="{% url 'dashboard:category_create' %}" class="btn-db-primary">
+                <i class="bi bi-plus-lg"></i> Nouvelle catégorie
+            </a>
+        </div>
+    </div>
+    <div class="card-panel-body p-0">
+        {% if categories %}
+        <table class="table-db">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Slug</th>
+                    <th>Produits</th>
+                    <th>Actifs</th>
+                    <th>Statut</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if cat.image %}
+                            <img src="{{ cat.image.url }}" alt="{{ cat.name }}" style="width:36px;height:36px;object-fit:cover;border-radius:8px;">
+                            {% endif %}
+                            <strong>{{ cat.name }}</strong>
+                        </div>
+                    </td>
+                    <td class="text-soft">{{ cat.slug }}</td>
+                    <td><strong>{{ cat.product_total }}</strong></td>
+                    <td><strong>{{ cat.active_product_total }}</strong></td>
+                    <td>
+                        {% if cat.is_active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-cell">
+                            <a href="{% url 'dashboard:category_edit' cat.id %}" class="btn-icon" title="Modifier">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'dashboard:category_delete' cat.id %}" class="btn-icon danger" title="Supprimer" onclick="return confirm('Supprimer {{ cat.name }} ?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-tags"></i>
+            <h6>Aucune catégorie</h6>
+            <p class="mb-0">Créez votre première catégorie.</p>
+            <a href="{% url 'dashboard:category_create' %}" class="btn-db-primary mt-3">
+                <i class="bi bi-plus-lg"></i> Ajouter une catégorie
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Modifier{% else %}Nouvelle{% endif %} catégorie{% endblock %}
+{% block page_title %}{% if form.instance.pk %}Modifier la catégorie{% else %}Nouvelle catégorie{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+    <div class="card-panel-header">
+        <h5>
+            {% if form.instance.pk %}
+            <i class="bi bi-pencil me-2"></i>Modification : {{ form.instance.name }}
+            {% else %}
+            <i class="bi bi-plus-circle me-2"></i>Ajouter une catégorie
+            {% endif %}
+        </h5>
+        <a href="{% url 'dashboard:category_list' %}" class="btn-db-outline">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+    <div class="card-panel-body">
+        <form method="post" enctype="multipart/form-data" class="form-db">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.name.id_for_label }}">Nom</label>
+                        <input type="text" name="{{ form.name.html_name }}" id="{{ form.name.id_for_label }}"
+                               class="form-control {% if form.name.errors %}is-invalid{% endif %}"
+                               value="{{ form.name.value|default:'' }}" required>
+                        {% for error in form.name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.image.id_for_label }}">Image</label>
+                        {% if form.instance.image %}
+                        <div class="mb-2">
+                            <img src="{{ form.instance.image.url }}" alt="Aperçu" style="max-height:80px;border-radius:8px;">
+                        </div>
+                        {% endif %}
+                        <input type="file" name="{{ form.image.html_name }}" id="{{ form.image.id_for_label }}"
+                               class="form-control {% if form.image.errors %}is-invalid{% endif %}" accept="image/*">
+                        {% for error in form.image.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+                <textarea name="{{ form.description.html_name }}" id="{{ form.description.id_for_label }}"
+                          class="form-control {% if form.description.errors %}is-invalid{% endif %}"
+                          rows="4">{{ form.description.value|default:'' }}</textarea>
+                {% for error in form.description.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input type="checkbox" name="{{ form.is_active.html_name }}" id="{{ form.is_active.id_for_label }}"
+                           class="form-check-input" value="1" {% if form.is_active.value %}checked{% endif %}>
+                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Catégorie active</label>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn-db-primary">
+                    <i class="bi bi-check-lg"></i>
+                    {% if form.instance.pk %}Enregistrer{% else %}Créer la catégorie{% endif %}
+                </button>
+                <a href="{% url 'dashboard:category_list' %}" class="btn-db-outline">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

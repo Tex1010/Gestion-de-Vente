@@ -1,0 +1,210 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Tableau de bord{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card blue">
+        <div class="stat-card-header">
+            <p class="stat-card-label">Commandes</p>
+            <i class="bi bi-receipt"></i>
+        </div>
+        <p class="stat-card-value">{{ stats.order_count }}</p>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-card-header">
+            <p class="stat-card-label">Revenu total</p>
+            <i class="bi bi-currency-euro"></i>
+        </div>
+        <p class="stat-card-value">{{ stats.revenue|floatformat:0 }} €</p>
+    </div>
+    <div class="stat-card amber">
+        <div class="stat-card-header">
+            <p class="stat-card-label">Produits actifs</p>
+            <i class="bi bi-box-seam"></i>
+        </div>
+        <p class="stat-card-value">{{ stats.active_product_count }}</p>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-card-header">
+            <p class="stat-card-label">Catégories</p>
+            <i class="bi bi-tags"></i>
+        </div>
+        <p class="stat-card-value">{{ stats.category_count }}</p>
+    </div>
+    <div class="stat-card rose">
+        <div class="stat-card-header">
+            <p class="stat-card-label">Stock faible</p>
+            <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <p class="stat-card-value">{{ stats.low_stock_count }}</p>
+    </div>
+    <div class="stat-card teal">
+        <div class="stat-card-header">
+            <p class="stat-card-label">Clients</p>
+            <i class="bi bi-people"></i>
+        </div>
+        <p class="stat-card-value">{{ stats.customer_count }}</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card-panel">
+            <div class="card-panel-header">
+                <h5><i class="bi bi-clock-history me-2"></i>Commandes récentes</h5>
+                <a href="{% url 'dashboard:order_list' %}" class="btn-db-outline btn-sm">Voir tout</a>
+            </div>
+            <div class="card-panel-body p-0">
+                {% if recent_orders %}
+                <table class="table-db">
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Client</th>
+                            <th>Montant</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                        <tr>
+                            <td><strong>#{{ order.id }}</strong></td>
+                            <td>{{ order.full_name }}</td>
+                            <td>{{ order.total_amount|floatformat:2 }} €</td>
+                            <td>
+                                <span class="status-badge status-{{ order.status }}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="text-soft">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <a href="{% url 'dashboard:order_detail' order.id %}" class="btn-icon" title="Détail">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <h6>Aucune commande</h6>
+                    <p class="mb-0">Les commandes apparaîtront ici.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-panel">
+            <div class="card-panel-header">
+                <h5><i class="bi bi-star me-2"></i>Top produits</h5>
+            </div>
+            <div class="card-panel-body p-0">
+                {% if top_products %}
+                <table class="table-db">
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th>Catégorie</th>
+                            <th>Vendus</th>
+                            <th>Commandes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in top_products %}
+                        <tr>
+                            <td><strong>{{ p.name }}</strong></td>
+                            <td>{{ p.category.name }}</td>
+                            <td>{{ p.sold_quantity|default:0 }}</td>
+                            <td>{{ p.order_count|default:0 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-bar-chart"></i>
+                    <h6>Pas encore de ventes</h6>
+                    <p class="mb-0">Les données de vente apparaîtront ici.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card-panel">
+            <div class="card-panel-header">
+                <h5><i class="bi bi-pie-chart me-2"></i>Statut des commandes</h5>
+            </div>
+            <div class="card-panel-body">
+                <div class="d-flex flex-column gap-2">
+                    <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-amber-subtle">
+                        <span><span class="status-badge status-pending">En attente</span></span>
+                        <strong>{{ status_breakdown.pending }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-blue-subtle">
+                        <span><span class="status-badge status-confirmed">Confirmée</span></span>
+                        <strong>{{ status_breakdown.confirmed }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-purple-subtle">
+                        <span><span class="status-badge status-preparing">En préparation</span></span>
+                        <strong>{{ status_breakdown.preparing }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-green-subtle">
+                        <span><span class="status-badge status-delivered">Livrée</span></span>
+                        <strong>{{ status_breakdown.delivered }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-2 rounded-3 bg-red-subtle">
+                        <span><span class="status-badge status-cancelled">Annulée</span></span>
+                        <strong>{{ status_breakdown.cancelled }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-panel">
+            <div class="card-panel-header">
+                <h5><i class="bi bi-exclamation-diamond me-2"></i>Stock faible</h5>
+                <a href="{% url 'dashboard:product_list' %}" class="btn-db-outline btn-sm">Gérer</a>
+            </div>
+            <div class="card-panel-body p-0">
+                {% if low_stock_products %}
+                <table class="table-db">
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th>Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in low_stock_products %}
+                        <tr>
+                            <td>{{ p.name }}</td>
+                            <td>
+                                <span class="badge {% if p.stock == 0 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                    {{ p.stock }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-check-circle text-success"></i>
+                    <h6>Tout est en stock</h6>
+                    <p class="mb-0">Aucun produit en rupture.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

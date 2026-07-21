@@ -1,0 +1,24 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Confirmer la suppression{% endblock %}
+{% block page_title %}Confirmer la suppression{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+    <div class="card-panel-body text-center py-5">
+        <i class="bi bi-exclamation-triangle" style="font-size:3rem;color:var(--db-danger);"></i>
+        <h4 class="mt-3 mb-2">Êtes-vous sûr de vouloir supprimer cet élément ?</h4>
+        <p class="text-soft mb-4">
+            "<strong>{{ object }}</strong>" sera définitivement supprimé. Cette action est irréversible.
+        </p>
+        <form method="post" class="d-inline-flex gap-2">
+            {% csrf_token %}
+            <button type="submit" class="btn-db-danger">
+                <i class="bi bi-trash"></i> Oui, supprimer
+            </button>
+            <a href="{{ cancel_url }}" class="btn-db-outline">Annuler</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

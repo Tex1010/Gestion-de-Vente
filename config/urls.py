@@ -8,7 +8,9 @@ admin.site.site_title = "Admin boutique"
 admin.site.index_title = "Gestion du site de vente"
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
+    path("dashboard/", include("dashboard.urls")),
+    path("compte/", include("accounts.urls")),
     path("", include("core.urls")),
     path("", include("catalog.urls")),
     path("", include("orders.urls")),

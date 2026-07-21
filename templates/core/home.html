@@ -1,8 +1,59 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Accueil | {{ site_config.site_name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Slider bannières */
+.banner-slider { position: relative; overflow: hidden; border-radius: 1rem; }
+.banner-slide { display: none; }
+.banner-slide.active { display: block; }
+.banner-slide img { width: 100%; height: 400px; object-fit: cover; }
+.banner-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 100%); display: flex; align-items: center; padding: 3rem; }
+.banner-content { max-width: 500px; color: #fff; }
+.banner-content h2 { font-size: 2rem; font-weight: 800; }
+.banner-content p { opacity: 0.9; }
+.banner-dots { position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.5rem; }
+.banner-dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.5); cursor: pointer; border: none; }
+.banner-dot.active { background: #fff; }
+</style>
+{% endblock %}
+
 {% block content %}
+<!-- ===== SLIDER BANNIÈRES ===== -->
+{% if hero_banners %}
+<section class="pt-4">
+    <div class="container">
+        <div class="banner-slider" id="heroSlider">
+            {% for banner in hero_banners %}
+            <div class="banner-slide {% if forloop.first %}active{% endif %}">
+                <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Bannière' }}">
+                <div class="banner-overlay">
+                    <div class="banner-content">
+                        {% if banner.title %}<h2>{{ banner.title }}</h2>{% endif %}
+                        {% if banner.subtitle %}<p>{{ banner.subtitle }}</p>{% endif %}
+                        {% if banner.link_url and banner.link_text %}
+                        <a href="{{ banner.link_url }}" class="btn btn-light btn-lg rounded-pill px-4 mt-2">
+                            {{ banner.link_text }} <i class="bi bi-arrow-right ms-2"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% if hero_banners|length > 1 %}
+            <div class="banner-dots">
+                {% for banner in hero_banners %}
+                <button class="banner-dot {% if forloop.first %}active{% endif %}" data-slide="{{ forloop.counter0 }}"></button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% else %}
+<!-- Hero statique (fallback) -->
 <section class="hero-section py-5 py-lg-6">
     <div class="container">
         <div class="row align-items-center g-4">
@@ -11,7 +62,7 @@
                 <h1 class="display-5 fw-bold mt-3">{{ site_config.hero_title }}</h1>
                 <p class="lead text-light-emphasis mt-3">{{ site_config.hero_subtitle }}</p>
                 <div class="d-flex flex-wrap gap-3 mt-4">
-                    <a href="#catalogue" class="btn btn-primary btn-lg rounded-pill px-4">Voir les produits</a>
+                    <a href="{% url 'catalog:product_list' %}" class="btn btn-primary btn-lg rounded-pill px-4">Voir les produits</a>
                     <a href="{% url 'orders:cart_detail' %}" class="btn btn-outline-light btn-lg rounded-pill px-4">Mon panier</a>
                 </div>
             </div>
@@ -22,33 +73,35 @@
                         <i class="bi bi-lightning-charge-fill text-warning fs-4"></i>
                     </div>
                     <div class="hero-stat">
-                        <strong>Catalogue par categories</strong>
-                        <span>{{ categories|length }} categories disponibles</span>
+                        <strong>Catalogue par catégories</strong>
+                        <span>{{ categories|length }} catégories disponibles</span>
                     </div>
                     <div class="hero-stat">
                         <strong>Panier dynamique</strong>
-                        <span>Ajout, mise a jour, suppression et checkout fluide</span>
+                        <span>Ajout, mise à jour, suppression et checkout fluide</span>
                     </div>
                     <div class="hero-stat">
                         <strong>Interface admin</strong>
-                        <span>Produits, commandes, branding et page a propos</span>
+                        <span>Produits, commandes, branding et pages</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+{% endif %}
 
+<!-- ===== FILTRES RAPIDES ===== -->
 <section class="py-5">
     <div class="container">
         <div class="filter-box p-4">
             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
                 <div>
                     <h2 class="h3 mb-1">Catalogue intelligent</h2>
-                    <p class="text-muted mb-0">Trie les produits par categorie et recherche rapidement ce que tu veux.</p>
+                    <p class="text-muted mb-0">Filtrez par catégorie et recherchez rapidement ce que vous voulez.</p>
                 </div>
-                <a href="/admin/" class="btn btn-outline-primary rounded-pill">
-                    <i class="bi bi-shield-lock me-2"></i>Acceder a l'admin
+                <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-primary rounded-pill">
+                    <i class="bi bi-grid me-2"></i>Voir tout le catalogue
                 </a>
             </div>
             <form method="get" class="row g-3">
@@ -57,7 +110,7 @@
                 </div>
                 <div class="col-lg-4">
                     <select class="form-select form-select-lg" name="categorie">
-                        <option value="">Toutes les categories</option>
+                        <option value="">Toutes les catégories</option>
                         {% for category in categories %}
                             <option value="{{ category.slug }}" {% if selected_category == category.slug %}selected{% endif %}>
                                 {{ category.name }}
@@ -73,13 +126,36 @@
     </div>
 </section>
 
+<!-- ===== PRODUITS EN PROMOTION ===== -->
+{% if sale_products %}
+<section class="pb-5">
+    <div class="container">
+        <div class="section-heading d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <span class="eyebrow">Bonnes affaires</span>
+                <h2 class="h3 mb-0">🔥 En promotion</h2>
+            </div>
+            <a href="{% url 'catalog:product_list' %}?tri=-price" class="btn btn-sm btn-outline-danger rounded-pill">
+                Voir tout <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+            {% for product in sale_products %}
+                {% include "includes/product_card.html" %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ===== PRODUITS VEDETTES ===== -->
 {% if featured_products %}
 <section class="pb-5">
     <div class="container">
         <div class="section-heading d-flex justify-content-between align-items-center mb-4">
             <div>
-                <span class="eyebrow">Selection premium</span>
-                <h2 class="h3 mb-0">Produits vedettes</h2>
+                <span class="eyebrow">Sélection premium</span>
+                <h2 class="h3 mb-0">⭐ Produits vedettes</h2>
             </div>
         </div>
         <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
@@ -91,6 +167,29 @@
 </section>
 {% endif %}
 
+<!-- ===== NOUVEAUX PRODUITS ===== -->
+{% if new_products %}
+<section class="pb-5">
+    <div class="container">
+        <div class="section-heading d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <span class="eyebrow">Nouveautés</span>
+                <h2 class="h3 mb-0">🆕 Nouveaux produits</h2>
+            </div>
+            <a href="{% url 'catalog:product_list' %}" class="btn btn-sm btn-outline-primary rounded-pill">
+                Voir tout <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+            {% for product in new_products %}
+                {% include "includes/product_card.html" %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ===== TOUS LES PRODUITS ===== -->
 <section class="pb-5" id="catalogue">
     <div class="container">
         <div class="section-heading d-flex justify-content-between align-items-center mb-4">
@@ -107,8 +206,8 @@
                 <div class="col-12">
                     <div class="empty-state text-center p-5">
                         <i class="bi bi-search fs-1 d-block mb-3"></i>
-                        <h3 class="h4">Aucun produit trouve</h3>
-                        <p class="text-muted mb-0">Essaie une autre categorie ou un autre mot-cle.</p>
+                        <h3 class="h4">Aucun produit trouvé</h3>
+                        <p class="text-muted mb-0">Essayez une autre catégorie ou un autre mot-clé.</p>
                     </div>
                 </div>
             {% endfor %}
@@ -116,10 +215,35 @@
     </div>
 </section>
 
+<!-- ===== BANNIÈRES SECONDAIRES ===== -->
+{% if secondary_banners %}
+<section class="pb-5">
+    <div class="container">
+        <div class="row g-4">
+            {% for banner in secondary_banners %}
+            <div class="col-md-6">
+                <div class="position-relative rounded-4 overflow-hidden" style="height:250px;">
+                    <img src="{{ banner.image.url }}" alt="{{ banner.title|default:'Bannière' }}" style="width:100%;height:100%;object-fit:cover;">
+                    <div class="position-absolute bottom-0 start-0 end-0 p-4" style="background:linear-gradient(transparent, rgba(0,0,0,0.7));">
+                        {% if banner.title %}<h4 class="text-white mb-1">{{ banner.title }}</h4>{% endif %}
+                        {% if banner.subtitle %}<p class="text-white-50 mb-2 small">{{ banner.subtitle }}</p>{% endif %}
+                        {% if banner.link_url and banner.link_text %}
+                        <a href="{{ banner.link_url }}" class="btn btn-sm btn-light rounded-pill">{{ banner.link_text }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ===== CATÉGORIES ===== -->
 <section class="pb-5">
     <div class="container">
         <div class="section-heading mb-4">
-            <span class="eyebrow">Par categorie</span>
+            <span class="eyebrow">Par catégorie</span>
             <h2 class="h3 mb-0">Organisation du catalogue</h2>
         </div>
         <div class="row g-4">
@@ -127,10 +251,12 @@
                 <div class="col-lg-4">
                     <div class="category-card p-4 h-100">
                         <h3 class="h5">{{ category.name }}</h3>
-                        <p class="text-muted">{{ category.description|default:"Cette categorie peut etre gerée depuis l'administration." }}</p>
+                        <p class="text-muted">{{ category.description|default:"Gérez cette catégorie depuis l'administration." }}</p>
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="small text-primary fw-semibold">{{ category.products.count }} produit{{ category.products.count|pluralize }}</span>
-                            <a href="/?categorie={{ category.slug }}" class="text-decoration-none">Explorer</a>
+                            <a href="{% url 'catalog:product_list_by_category' category.slug %}" class="text-decoration-none">
+                                Explorer <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -138,4 +264,38 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Slider automatique pour les bannières
+(function() {
+    const slider = document.getElementById('heroSlider');
+    if (!slider) return;
+    const slides = slider.querySelectorAll('.banner-slide');
+    const dots = slider.querySelectorAll('.banner-dot');
+    if (slides.length <= 1) return;
+
+    let current = 0;
+    const interval = setInterval(() => {
+        slides[current].classList.remove('active');
+        if (dots[current]) dots[current].classList.remove('active');
+        current = (current + 1) % slides.length;
+        slides[current].classList.add('active');
+        if (dots[current]) dots[current].classList.add('active');
+    }, 5000);
+
+    // Navigation manuelle par les dots
+    dots.forEach((dot, i) => {
+        dot.addEventListener('click', () => {
+            clearInterval(interval);
+            slides[current].classList.remove('active');
+            dots[current].classList.remove('active');
+            current = i;
+            slides[current].classList.add('active');
+            dots[current].classList.add('active');
+        });
+    });
+})();
+</script>
 {% endblock %}

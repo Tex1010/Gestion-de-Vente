@@ -1,0 +1,145 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+    <div class="card-panel-header">
+        <h5>
+            <i class="bi bi-image me-2"></i>{{ title }}
+        </h5>
+        <a href="{% url 'dashboard:banner_list' %}" class="btn-db-outline">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+    <div class="card-panel-body">
+        <form method="post" enctype="multipart/form-data" class="form-db">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="row g-4">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.title.id_for_label }}">Titre</label>
+                        <input type="text" name="{{ form.title.html_name }}" id="{{ form.title.id_for_label }}"
+                               class="form-control {% if form.title.errors %}is-invalid{% endif %}"
+                               value="{{ form.title.value|default:'' }}" placeholder="Titre de la bannière">
+                        {% for error in form.title.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.subtitle.id_for_label }}">Sous-titre</label>
+                        <textarea name="{{ form.subtitle.html_name }}" id="{{ form.subtitle.id_for_label }}"
+                                  class="form-control {% if form.subtitle.errors %}is-invalid{% endif %}"
+                                  rows="2" placeholder="Sous-titre ou description">{{ form.subtitle.value|default:'' }}</textarea>
+                        {% for error in form.subtitle.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ form.link_url.id_for_label }}">Lien (URL)</label>
+                                <input type="url" name="{{ form.link_url.html_name }}" id="{{ form.link_url.id_for_label }}"
+                                       class="form-control {% if form.link_url.errors %}is-invalid{% endif %}"
+                                       value="{{ form.link_url.value|default:'' }}" placeholder="https://...">
+                                {% for error in form.link_url.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="{{ form.link_text.id_for_label }}">Texte du bouton</label>
+                                <input type="text" name="{{ form.link_text.html_name }}" id="{{ form.link_text.id_for_label }}"
+                                       class="form-control {% if form.link_text.errors %}is-invalid{% endif %}"
+                                       value="{{ form.link_text.value|default:'' }}" placeholder="Ex: Voir la collection">
+                                {% for error in form.link_text.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.image.id_for_label }}">Image <span class="text-danger">*</span></label>
+                        <div class="image-preview mb-2" id="imagePreview">
+                            {% if form.instance.image %}
+                            <img src="{{ form.instance.image.url }}" alt="Aperçu" style="max-height:150px;border-radius:8px;width:100%;object-fit:cover;">
+                            {% else %}
+                            <div class="border rounded p-4 text-center text-muted" style="background:#f8f9fa;">
+                                <i class="bi bi-image fs-2"></i>
+                                <p class="mb-0 small">Aucune image</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <input type="file" name="{{ form.image.html_name }}" id="{{ form.image.id_for_label }}"
+                               class="form-control {% if form.image.errors %}is-invalid{% endif %}" accept="image/*">
+                        {% for error in form.image.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                        <small class="text-muted">Format recommandé : 1920x600px (hero) ou 600x400px (secondaire)</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.position.id_for_label }}">Position</label>
+                        <select name="{{ form.position.html_name }}" id="{{ form.position.id_for_label }}"
+                                class="form-select {% if form.position.errors %}is-invalid{% endif %}">
+                            {% for choice in form.position.field.choices %}
+                            <option value="{{ choice.0 }}" {% if form.position.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                        {% for error in form.position.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.order.id_for_label }}">Ordre d'affichage</label>
+                        <input type="number" name="{{ form.order.html_name }}" id="{{ form.order.id_for_label }}"
+                               class="form-control {% if form.order.errors %}is-invalid{% endif %}"
+                               value="{{ form.order.value|default:'0' }}" min="0">
+                        {% for error in form.order.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="mb-3 form-check form-switch">
+                        <input type="checkbox" name="{{ form.is_active.html_name }}" id="{{ form.is_active.id_for_label }}"
+                               class="form-check-input" value="1" {% if form.is_active.value %}checked{% endif %}>
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                            <strong>Bannière active</strong>
+                            <small class="d-block text-muted">Visible sur le site</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4 pt-3 border-top">
+                <button type="submit" class="btn-db-primary">
+                    <i class="bi bi-check-lg"></i>
+                    {% if form.instance.pk %}Enregistrer les modifications{% else %}Créer la bannière{% endif %}
+                </button>
+                <a href="{% url 'dashboard:banner_list' %}" class="btn-db-outline">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('{{ form.image.id_for_label }}')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '<img src="' + ev.target.result + '" alt="Aperçu" style="max-height:150px;border-radius:8px;width:100%;object-fit:cover;">';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Contact | {{ site_config.site_name }}{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="content-panel p-4 h-100">
+                    <h4 class="mb-4"><i class="bi bi-envelope me-2"></i>Nous contacter</h4>
+                    <div class="d-flex flex-column gap-3">
+                        {% if site_config.contact_phone %}
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                                <i class="bi bi-telephone text-primary fs-5"></i>
+                            </div>
+                            <div>
+                                <strong>Téléphone</strong>
+                                <p class="mb-0">{{ site_config.contact_phone }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if site_config.contact_email %}
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                                <i class="bi bi-envelope text-primary fs-5"></i>
+                            </div>
+                            <div>
+                                <strong>Email</strong>
+                                <p class="mb-0">{{ site_config.contact_email }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if site_config.address %}
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                                <i class="bi bi-geo-alt text-primary fs-5"></i>
+                            </div>
+                            <div>
+                                <strong>Adresse</strong>
+                                <p class="mb-0">{{ site_config.address }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if site_config.opening_hours %}
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                                <i class="bi bi-clock text-primary fs-5"></i>
+                            </div>
+                            <div>
+                                <strong>Horaires</strong>
+                                <p class="mb-0">{{ site_config.opening_hours }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <hr>
+                    <h6>Suivez-nous</h6>
+                    <div class="d-flex gap-3 fs-4">
+                        {% if site_config.whatsapp_url %}<a href="{{ site_config.whatsapp_url }}" target="_blank"><i class="bi bi-whatsapp text-success"></i></a>{% endif %}
+                        {% if site_config.facebook_url %}<a href="{{ site_config.facebook_url }}" target="_blank"><i class="bi bi-facebook text-primary"></i></a>{% endif %}
+                        {% if site_config.instagram_url %}<a href="{{ site_config.instagram_url }}" target="_blank"><i class="bi bi-instagram text-danger"></i></a>{% endif %}
+                        {% if site_config.telegram_url %}<a href="{{ site_config.telegram_url }}" target="_blank"><i class="bi bi-telegram text-info"></i></a>{% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="content-panel p-4">
+                    <h4 class="mb-4"><i class="bi bi-chat-dots me-2"></i>Envoyez-nous un message</h4>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nom complet <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control form-control-lg" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" name="email" class="form-control form-control-lg" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Sujet <span class="text-danger">*</span></label>
+                                <input type="text" name="subject" class="form-control form-control-lg" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Message <span class="text-danger">*</span></label>
+                                <textarea name="message" class="form-control form-control-lg" rows="5" required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-send me-2"></i>Envoyer
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

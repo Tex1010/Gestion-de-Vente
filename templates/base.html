@@ -37,12 +37,35 @@
                         <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:home' %}">Accueil</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if 'a-propos' in request.path %}active{% endif %}" href="{% url 'core:about' %}">A propos</a>
+                        <a class="nav-link {% if 'catalogue' in request.path %}active{% endif %}" href="{% url 'catalog:product_list' %}">Catalogue</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if 'panier' in request.path or 'commande' in request.path %}active{% endif %}" href="{% url 'orders:cart_detail' %}">
-                            <i class="bi bi-cart3 me-1"></i>Panier
-                            <span class="badge rounded-pill text-bg-light ms-1">{{ cart_item_count }}</span>
+                        <a class="nav-link {% if 'a-propos' in request.path %}active{% endif %}" href="{% url 'core:about' %}">A propos</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-1"></i>
+                            {% if user.is_authenticated %}{{ user.username }}{% else %}Compte{% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% if user.is_authenticated %}
+                                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person me-2"></i>Mon profil</a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:order_history' %}"><i class="bi bi-receipt me-2"></i>Mes commandes</a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:wishlist' %}"><i class="bi bi-heart me-2"></i>Mes favoris</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Déconnexion</a></li>
+                            {% else %}
+                                <li><a class="dropdown-item" href="{% url 'accounts:login' %}"><i class="bi bi-box-arrow-in-right me-2"></i>Connexion</a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:register' %}"><i class="bi bi-person-plus me-2"></i>Inscription</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link position-relative {% if 'panier' in request.path or 'commande' in request.path %}active{% endif %}" href="{% url 'orders:cart_detail' %}">
+                            <i class="bi bi-cart3 fs-5"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary" style="font-size:0.6rem;">
+                                {{ cart_item_count }}
+                            </span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -86,7 +109,7 @@
                         <a href="{% url 'core:home' %}">Accueil</a>
                         <a href="{% url 'core:about' %}">A propos</a>
                         <a href="{% url 'orders:cart_detail' %}">Panier</a>
-                        <a href="/admin/">Administration</a>
+                        <a href="{% url 'dashboard:login' %}">Administration</a>
                     </div>
                 </div>
                 <div class="col-lg-3">

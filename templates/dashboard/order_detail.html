@@ -1,0 +1,117 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Commande #{{ order.id }}{% endblock %}
+{% block page_title %}Commande #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'dashboard:order_list' %}" class="btn-db-outline">
+        <i class="bi bi-arrow-left"></i> Retour aux commandes
+    </a>
+</div>
+
+<div class="card-panel">
+    <div class="card-panel-header">
+        <h5><i class="bi bi-info-circle me-2"></i>Détails de la commande</h5>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="status-badge status-{{ order.status }}">
+                {{ order.get_status_display }}
+            </span>
+        </div>
+    </div>
+    <div class="card-panel-body">
+        <div class="order-meta-grid">
+            <div class="order-meta-item">
+                <strong>Client</strong>
+                <span>{{ order.full_name }}</span>
+            </div>
+            <div class="order-meta-item">
+                <strong>Téléphone</strong>
+                <span>{{ order.phone }}</span>
+            </div>
+            <div class="order-meta-item">
+                <strong>Email</strong>
+                <span>{{ order.email|default:'—' }}</span>
+            </div>
+            <div class="order-meta-item">
+                <strong>Ville</strong>
+                <span>{{ order.city }}</span>
+            </div>
+            <div class="order-meta-item">
+                <strong>Adresse</strong>
+                <span>{{ order.address }}</span>
+            </div>
+            <div class="order-meta-item">
+                <strong>Date</strong>
+                <span>{{ order.created_at|date:"d/m/Y H:i" }}</span>
+            </div>
+        </div>
+
+        {% if order.notes %}
+        <div class="mb-3">
+            <strong class="d-block mb-1">Notes :</strong>
+            <p class="mb-0 text-soft">{{ order.notes }}</p>
+        </div>
+        {% endif %}
+
+        {% if order.items.exists %}
+        <div class="table-responsive">
+            <table class="table-db order-items-table">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>Prix unitaire</th>
+                        <th>Quantité</th>
+                        <th>Sous-total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr>
+                        <td>
+                            <div class="product-highlight">
+                                {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}">
+                                {% else %}
+                                <div style="width:44px;height:44px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;">
+                                    <i class="bi bi-cart text-soft"></i>
+                                </div>
+                                {% endif %}
+                                <strong>{{ item.product_name }}</strong>
+                            </div>
+                        </td>
+                        <td>{{ item.unit_price|floatformat:2 }} €</td>
+                        <td>{{ item.quantity }}</td>
+                        <td><strong>{{ item.subtotal|floatformat:2 }} €</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="order-total-row">
+                        <td colspan="3" class="text-end">Total</td>
+                        <td>{{ order.total_amount|floatformat:2 }} €</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% endif %}
+
+        <div class="mt-4">
+            <strong class="d-block mb-2">Modifier le statut :</strong>
+            <form method="post" class="d-flex gap-2 flex-wrap">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_status">
+                <select name="status" class="form-select" style="width:auto;">
+                    {% for key, label in status_choices %}
+                    <option value="{{ key }}" {% if order.status == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn-db-primary">
+                    <i class="bi bi-arrow-repeat"></i> Mettre à jour
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,279 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Modifier{% else %}Nouveau{% endif %} produit{% endblock %}
+{% block page_title %}{% if form.instance.pk %}Modifier le produit{% else %}Nouveau produit{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+.seo-help { font-size: 0.8rem; color: #6c757d; margin-top: 0.25rem; }
+.char-counter { font-size: 0.75rem; color: #6c757d; text-align: right; }
+.preview-image { max-height: 100px; border-radius: 8px; object-fit: cover; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+    <div class="card-panel-header">
+        <h5>
+            {% if form.instance.pk %}
+            <i class="bi bi-pencil me-2"></i>Modification : {{ form.instance.name }}
+            {% else %}
+            <i class="bi bi-plus-circle me-2"></i>Ajouter un produit
+            {% endif %}
+        </h5>
+        <a href="{% url 'dashboard:product_list' %}" class="btn-db-outline">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+    <div class="card-panel-body">
+        <form method="post" enctype="multipart/form-data" class="form-db" id="productForm">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- ===== INFORMATIONS GÉNÉRALES ===== -->
+            <div class="section-title mb-3">
+                <i class="bi bi-info-circle"></i> Informations générales
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.name.id_for_label }}">Nom du produit <span class="text-danger">*</span></label>
+                        <input type="text" name="{{ form.name.html_name }}" id="{{ form.name.id_for_label }}"
+                               class="form-control {% if form.name.errors %}is-invalid{% endif %}"
+                               value="{{ form.name.value|default:'' }}" required>
+                        {% for error in form.name.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.category.id_for_label }}">Catégorie <span class="text-danger">*</span></label>
+                        <select name="{{ form.category.html_name }}" id="{{ form.category.id_for_label }}"
+                                class="form-select {% if form.category.errors %}is-invalid{% endif %}" required>
+                            {% for choice in form.category.field.choices %}
+                            <option value="{{ choice.0 }}" {% if form.category.value|stringformat:'s' == choice.0|stringformat:'s' %}selected{% endif %}>{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                        {% for error in form.category.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.sku.id_for_label }}">SKU (référence)</label>
+                        <input type="text" name="{{ form.sku.html_name }}" id="{{ form.sku.id_for_label }}"
+                               class="form-control {% if form.sku.errors %}is-invalid{% endif %}"
+                               value="{{ form.sku.value|default:'' }}" placeholder="Ex: PROD-001">
+                        {% for error in form.sku.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== PRIX & STOCK ===== -->
+            <div class="section-title mb-3 mt-4">
+                <i class="bi bi-currency-euro"></i> Prix, stock & promotion
+            </div>
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.price.id_for_label }}">Prix actuel (€) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">€</span>
+                            <input type="number" step="0.01" name="{{ form.price.html_name }}" id="{{ form.price.id_for_label }}"
+                                   class="form-control {% if form.price.errors %}is-invalid{% endif %}"
+                                   value="{{ form.price.value|default:'' }}" required>
+                        </div>
+                        {% for error in form.price.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.old_price.id_for_label }}">Ancien prix (€)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">€</span>
+                            <input type="number" step="0.01" name="{{ form.old_price.html_name }}" id="{{ form.old_price.id_for_label }}"
+                                   class="form-control {% if form.old_price.errors %}is-invalid{% endif %}"
+                                   value="{{ form.old_price.value|default:'' }}">
+                        </div>
+                        {% for error in form.old_price.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.stock.id_for_label }}">Stock</label>
+                        <input type="number" name="{{ form.stock.html_name }}" id="{{ form.stock.id_for_label }}"
+                               class="form-control {% if form.stock.errors %}is-invalid{% endif %}"
+                               value="{{ form.stock.value|default:'0' }}" min="0">
+                        {% for error in form.stock.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="mb-3 form-check form-switch">
+                        <input type="checkbox" name="{{ form.on_sale.html_name }}" id="{{ form.on_sale.id_for_label }}"
+                               class="form-check-input" value="1" {% if form.on_sale.value %}checked{% endif %}>
+                        <label class="form-check-label" for="{{ form.on_sale.id_for_label }}">
+                            <strong>En promotion</strong>
+                            <small class="d-block text-muted">Afficher le badge "Promotion"</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== CARACTÉRISTIQUES PHYSIQUES ===== -->
+            <div class="section-title mb-3 mt-4">
+                <i class="bi bi-box"></i> Caractéristiques physiques
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.weight.id_for_label }}">Poids (kg)</label>
+                        <input type="number" step="0.01" min="0" name="{{ form.weight.html_name }}" id="{{ form.weight.id_for_label }}"
+                               class="form-control {% if form.weight.errors %}is-invalid{% endif %}"
+                               value="{{ form.weight.value|default:'' }}" placeholder="Ex: 0.500">
+                        {% for error in form.weight.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.dimensions.id_for_label }}">Dimensions</label>
+                        <input type="text" name="{{ form.dimensions.html_name }}" id="{{ form.dimensions.id_for_label }}"
+                               class="form-control {% if form.dimensions.errors %}is-invalid{% endif %}"
+                               value="{{ form.dimensions.value|default:'' }}" placeholder="30 x 20 x 15 cm">
+                        {% for error in form.dimensions.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== DESCRIPTION & IMAGE ===== -->
+            <div class="section-title mb-3 mt-4">
+                <i class="bi bi-card-text"></i> Description et image
+            </div>
+            <div class="row g-4">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.short_description.id_for_label }}">Description courte</label>
+                        <input type="text" name="{{ form.short_description.html_name }}" id="{{ form.short_description.id_for_label }}"
+                               class="form-control {% if form.short_description.errors %}is-invalid{% endif %}"
+                               value="{{ form.short_description.value|default:'' }}" maxlength="255">
+                        {% for error in form.short_description.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.description.id_for_label }}">Description complète</label>
+                        <textarea name="{{ form.description.html_name }}" id="{{ form.description.id_for_label }}"
+                                  class="form-control {% if form.description.errors %}is-invalid{% endif %}"
+                                  rows="6">{{ form.description.value|default:'' }}</textarea>
+                        {% for error in form.description.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.image.id_for_label }}">Image principale</label>
+                        <div class="image-preview mb-2" id="imagePreview">
+                            {% if form.instance.image %}
+                            <img src="{{ form.instance.image.url }}" alt="Aperçu" class="preview-image">
+                            {% else %}
+                            <div class="border rounded p-3 text-center text-muted" style="background:#f8f9fa;">
+                                <i class="bi bi-image fs-1"></i>
+                                <p class="mb-0 small">Aucune image</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <input type="file" name="{{ form.image.html_name }}" id="{{ form.image.id_for_label }}"
+                               class="form-control {% if form.image.errors %}is-invalid{% endif %}" accept="image/*">
+                        {% for error in form.image.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== SEO ===== -->
+            <div class="section-title mb-3 mt-4">
+                <i class="bi bi-search"></i> Optimisation SEO
+                <small class="text-muted ms-2">(optionnel, mais recommandé)</small>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.meta_title.id_for_label }}">Meta title</label>
+                        <input type="text" name="{{ form.meta_title.html_name }}" id="{{ form.meta_title.id_for_label }}"
+                               class="form-control {% if form.meta_title.errors %}is-invalid{% endif %}"
+                               value="{{ form.meta_title.value|default:'' }}" maxlength="70"
+                               placeholder="Titre pour les moteurs de recherche"
+                               oninput="document.getElementById('metaTitleCount').textContent = this.value.length">
+                        <div class="char-counter"><span id="metaTitleCount">{{ form.meta_title.value|length|default:0 }}</span>/70</div>
+                        {% for error in form.meta_title.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.meta_description.id_for_label }}">Meta description</label>
+                        <textarea name="{{ form.meta_description.html_name }}" id="{{ form.meta_description.id_for_label }}"
+                                  class="form-control {% if form.meta_description.errors %}is-invalid{% endif %}"
+                                  rows="2" maxlength="165"
+                                  placeholder="Description pour les moteurs de recherche"
+                                  oninput="document.getElementById('metaDescCount').textContent = this.value.length">{{ form.meta_description.value|default:'' }}</textarea>
+                        <div class="char-counter"><span id="metaDescCount">{{ form.meta_description.value|length|default:0 }}</span>/165</div>
+                        {% for error in form.meta_description.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== STATUT ===== -->
+            <div class="section-title mb-3 mt-4">
+                <i class="bi bi-toggle-on"></i> Statut
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="form-check form-switch mb-2">
+                        <input type="checkbox" name="{{ form.is_active.html_name }}" id="{{ form.is_active.id_for_label }}"
+                               class="form-check-input" value="1" {% if form.is_active.value %}checked{% endif %}>
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                            <strong>Produit actif</strong>
+                            <small class="d-block text-muted">Visible sur le site</small>
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check form-switch mb-2">
+                        <input type="checkbox" name="{{ form.is_featured.html_name }}" id="{{ form.is_featured.id_for_label }}"
+                               class="form-check-input" value="1" {% if form.is_featured.value %}checked{% endif %}>
+                        <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
+                            <strong>Produit vedette</strong>
+                            <small class="d-block text-muted">Mis en avant sur la page d'accueil</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== BOUTONS ===== -->
+            <div class="d-flex gap-2 mt-4 pt-3 border-top">
+                <button type="submit" class="btn-db-primary">
+                    <i class="bi bi-check-lg"></i>
+                    {% if form.instance.pk %}Enregistrer les modifications{% else %}Créer le produit{% endif %}
+                </button>
+                <a href="{% url 'dashboard:product_list' %}" class="btn-db-outline">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Aperçu de l'image avant upload
+document.getElementById('{{ form.image.id_for_label }}')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '<img src="' + ev.target.result + '" alt="Aperçu" class="preview-image">';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

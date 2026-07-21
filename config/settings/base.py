@@ -23,6 +23,8 @@ INSTALLED_APPS = [
     "core",
     "catalog",
     "orders",
+    "dashboard",
+    "accounts",
 ]
 
 
@@ -101,9 +103,9 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 
-LOGIN_URL = "admin:login"
-LOGIN_REDIRECT_URL = "admin:index"
-LOGOUT_REDIRECT_URL = "/"
+LOGIN_URL = "dashboard:login"
+LOGIN_REDIRECT_URL = "dashboard:index"
+LOGOUT_REDIRECT_URL = "dashboard:login"
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

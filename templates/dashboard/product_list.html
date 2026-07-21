@@ -1,0 +1,129 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Produits{% endblock %}
+{% block page_title %}Gestion des produits{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+    <div class="card-panel-header">
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <span class="badge bg-secondary me-2">{{ summary.total }} produit{{ summary.total|pluralize }}</span>
+            <span class="badge bg-success">{{ summary.active }} actif{{ summary.active|pluralize }}</span>
+            <span class="badge bg-warning text-dark">{{ summary.featured }} vedette{{ summary.featured|pluralize }}</span>
+            <span class="badge bg-info">{{ summary.on_sale }} en promo</span>
+        </div>
+        <div class="btn-group-db">
+            <a href="{% url 'dashboard:product_create' %}" class="btn-db-primary">
+                <i class="bi bi-plus-lg"></i> Nouveau produit
+            </a>
+        </div>
+    </div>
+    <div class="card-panel-body">
+        <form class="search-form mb-3" method="get">
+            <input type="text" name="q" class="form-control" placeholder="Rechercher un produit..." value="{{ request.GET.q|default:'' }}">
+            <select name="category" class="form-select" style="width:auto;">
+                <option value="">Toutes les catégories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:'s' %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="status" class="form-select" style="width:auto;">
+                <option value="">Tous les statuts</option>
+                <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Actif</option>
+                <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactif</option>
+                <option value="featured" {% if request.GET.status == 'featured' %}selected{% endif %}>En vedette</option>
+                <option value="on_sale" {% if request.GET.status == 'on_sale' %}selected{% endif %}>En promotion</option>
+                <option value="low_stock" {% if request.GET.status == 'low_stock' %}selected{% endif %}>Stock faible</option>
+            </select>
+            <button type="submit" class="btn-db-primary"><i class="bi bi-search"></i> Filtrer</button>
+            <a href="{% url 'dashboard:product_list' %}" class="btn-db-outline">Réinitialiser</a>
+        </form>
+
+        {% if products %}
+        <div class="table-responsive">
+            <table class="table-db">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>SKU</th>
+                        <th>Catégorie</th>
+                        <th>Prix</th>
+                        <th>Stock</th>
+                        <th>Statut</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;">
+                                {% else %}
+                                <div style="width:40px;height:40px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;">
+                                    <i class="bi bi-image text-soft"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ product.name }}</strong>
+                                    <div class="d-flex gap-1 mt-1">
+                                        {% if product.is_featured %}<span class="badge bg-warning text-dark" style="font-size:0.65rem;">Vedette</span>{% endif %}
+                                        {% if product.on_sale %}<span class="badge bg-danger" style="font-size:0.65rem;">Promo</span>{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><code class="text-muted">{{ product.sku|default:"—" }}</code></td>
+                        <td>{{ product.category.name }}</td>
+                        <td>
+                            <strong>{{ product.price|floatformat:2 }} €</strong>
+                            {% if product.old_price %}
+                            <br><small class="text-decoration-line-through text-soft">{{ product.old_price|floatformat:2 }} €</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.stock == 0 %}
+                            <span class="badge bg-danger">Rupture</span>
+                            {% elif product.stock <= 5 %}
+                            <span class="badge bg-warning text-dark">{{ product.stock }}</span>
+                            {% else %}
+                            <span class="badge bg-success">{{ product.stock }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.is_active %}
+                            <span class="badge bg-success">Actif</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-cell">
+                                <a href="{% url 'dashboard:product_edit' product.id %}" class="btn-icon" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'dashboard:product_delete' product.id %}" class="btn-icon danger" title="Supprimer" onclick="return confirm('Supprimer {{ product.name }} ?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-box-seam"></i>
+            <h6>Aucun produit</h6>
+            <p class="mb-0">Commencez par ajouter un produit.</p>
+            <a href="{% url 'dashboard:product_create' %}" class="btn-db-primary mt-3">
+                <i class="bi bi-plus-lg"></i> Ajouter un produit
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
