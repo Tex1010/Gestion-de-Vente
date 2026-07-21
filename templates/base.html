@@ -70,7 +70,7 @@
                                 <li><a class="dropdown-item" href="{% url 'accounts:order_history' %}"><i class="bi bi-receipt me-2"></i>Mes commandes</a></li>
                                 <li><a class="dropdown-item" href="{% url 'accounts:wishlist' %}"><i class="bi bi-heart me-2"></i>Mes favoris</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Déconnexion</a></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:logout' %}" onclick="return confirm('Voulez-vous vraiment vous déconnecter ?')"><i class="bi bi-box-arrow-right me-2"></i>Déconnexion</a></li>
                             {% else %}
                                 <li><a class="dropdown-item" href="{% url 'accounts:login' %}"><i class="bi bi-box-arrow-in-right me-2"></i>Connexion</a></li>
                                 <li><a class="dropdown-item" href="{% url 'accounts:register' %}"><i class="bi bi-person-plus me-2"></i>Inscription</a></li>

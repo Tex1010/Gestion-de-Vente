@@ -25,7 +25,7 @@
     <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-secondary btn-sm w-100 {% if 'password' in url_name %}active{% endif %}">
         <i class="bi bi-key me-2"></i>Changer mot de passe
     </a>
-    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger btn-sm w-100">
+    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Voulez-vous vraiment vous déconnecter ?')">
         <i class="bi bi-box-arrow-right me-2"></i>Déconnexion
     </a>
     {% endwith %}
