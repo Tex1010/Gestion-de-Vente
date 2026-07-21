@@ -5,7 +5,24 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{{ site_config.site_name }}{% endblock %}</title>
-    <meta name="description" content="{{ site_config.site_tagline }}">
+    <meta name="description" content="{% block meta_description %}{{ site_config.meta_description|default:site_config.site_tagline }}{% endblock %}">
+    {% if site_config.meta_keywords %}
+    <meta name="keywords" content="{{ site_config.meta_keywords }}">
+    {% endif %}
+    <meta name="author" content="{{ site_config.site_name }}">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="{% block og_title %}{{ site_config.site_name }}{% endblock %}">
+    <meta property="og:description" content="{{ site_config.meta_description|default:site_config.site_tagline }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ site_config.site_name }}">
+    {% if site_config.logo %}
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ site_config.logo.url }}">
+    {% endif %}
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    {% if site_config.favicon %}
+    <link rel="icon" type="image/x-icon" href="{{ site_config.favicon.url }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ site_config.favicon.url }}">
+    {% endif %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -103,12 +120,24 @@
                         <p class="mb-0"><i class="bi bi-geo-alt me-2"></i>{{ site_config.address }}</p>
                     {% endif %}
                 </div>
-                <div class="col-lg-4">
+                <div class="col-lg-2">
                     <h6 class="mb-3">Navigation</h6>
                     <div class="d-flex flex-column gap-2">
                         <a href="{% url 'core:home' %}">Accueil</a>
-                        <a href="{% url 'core:about' %}">A propos</a>
+                        <a href="{% url 'catalog:product_list' %}">Catalogue</a>
+                        <a href="{% url 'core:about' %}">À propos</a>
+                        <a href="{% url 'core:faq' %}">FAQ</a>
+                        <a href="{% url 'core:contact' %}">Contact</a>
                         <a href="{% url 'orders:cart_detail' %}">Panier</a>
+                    </div>
+                </div>
+                <div class="col-lg-2">
+                    <h6 class="mb-3">Informations</h6>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="{% url 'core:page_detail' 'cgv' %}">CGV</a>
+                        <a href="{% url 'core:page_detail' 'privacy' %}">Confidentialité</a>
+                        <a href="{% url 'core:page_detail' 'legal' %}">Mentions légales</a>
+                        <a href="{% url 'core:page_detail' 'delivery' %}">Livraison</a>
                         <a href="{% url 'dashboard:login' %}">Administration</a>
                     </div>
                 </div>
@@ -117,16 +146,39 @@
                     {% if site_config.contact_phone %}
                         <p class="mb-2"><i class="bi bi-telephone me-2"></i>{{ site_config.contact_phone }}</p>
                     {% endif %}
+                    {% if site_config.contact_email %}
+                        <p class="mb-2"><i class="bi bi-envelope me-2"></i>{{ site_config.contact_email }}</p>
+                    {% endif %}
+                    {% if site_config.opening_hours %}
+                        <p class="mb-0"><i class="bi bi-clock me-2"></i>{{ site_config.opening_hours }}</p>
+                    {% endif %}
+                    <hr class="my-3">
+                    <h6 class="mb-3">Suivez-nous</h6>
                     <div class="d-flex gap-3 fs-4">
                         {% if site_config.whatsapp_url %}
-                            <a href="{{ site_config.whatsapp_url }}" target="_blank" rel="noreferrer"><i class="bi bi-whatsapp"></i></a>
+                            <a href="{{ site_config.whatsapp_url }}" target="_blank" rel="noreferrer" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>
                         {% endif %}
                         {% if site_config.facebook_url %}
-                            <a href="{{ site_config.facebook_url }}" target="_blank" rel="noreferrer"><i class="bi bi-facebook"></i></a>
+                            <a href="{{ site_config.facebook_url }}" target="_blank" rel="noreferrer" title="Facebook"><i class="bi bi-facebook"></i></a>
+                        {% endif %}
+                        {% if site_config.instagram_url %}
+                            <a href="{{ site_config.instagram_url }}" target="_blank" rel="noreferrer" title="Instagram"><i class="bi bi-instagram"></i></a>
+                        {% endif %}
+                        {% if site_config.telegram_url %}
+                            <a href="{{ site_config.telegram_url }}" target="_blank" rel="noreferrer" title="Telegram"><i class="bi bi-telegram"></i></a>
+                        {% endif %}
+                        {% if site_config.tiktok_url %}
+                            <a href="{{ site_config.tiktok_url }}" target="_blank" rel="noreferrer" title="TikTok"><i class="bi bi-tiktok"></i></a>
                         {% endif %}
                     </div>
                 </div>
             </div>
+            {% if site_config.footer_text %}
+            <hr class="my-4">
+            <div class="text-center text-light-emphasis small">
+                {{ site_config.footer_text|safe|linebreaks }}
+            </div>
+            {% endif %}
         </div>
     </footer>
 
@@ -138,6 +190,21 @@
     {% if site_config.facebook_url %}
         <a href="{{ site_config.facebook_url }}" class="social-float social-facebook" target="_blank" rel="noreferrer" aria-label="Facebook">
             <i class="bi bi-facebook"></i>
+        </a>
+    {% endif %}
+    {% if site_config.instagram_url %}
+        <a href="{{ site_config.instagram_url }}" class="social-float social-instagram" target="_blank" rel="noreferrer" aria-label="Instagram">
+            <i class="bi bi-instagram"></i>
+        </a>
+    {% endif %}
+    {% if site_config.telegram_url %}
+        <a href="{{ site_config.telegram_url }}" class="social-float social-telegram" target="_blank" rel="noreferrer" aria-label="Telegram">
+            <i class="bi bi-telegram"></i>
+        </a>
+    {% endif %}
+    {% if site_config.tiktok_url %}
+        <a href="{{ site_config.tiktok_url }}" class="social-float social-tiktok" target="_blank" rel="noreferrer" aria-label="TikTok">
+            <i class="bi bi-tiktok"></i>
         </a>
     {% endif %}
 

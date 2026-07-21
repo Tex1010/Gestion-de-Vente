@@ -1,22 +1,31 @@
+from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView, LogoutView
 from django.db.models import Count, Q, Sum
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 
 from catalog.models import Banner, Category, Product
-from core.models import SiteConfiguration
+from core.models import ActivityLog, Coupon, PaymentMethod, ShippingZone, SiteConfiguration, TaxRate
 from orders.models import Order
 
 from .forms import (
     BannerForm,
     CategoryForm,
+    CouponForm,
     DashboardAuthenticationForm,
     ProductForm,
+    ShippingZoneForm,
     SiteConfigurationForm,
+    TaxRateForm,
+    UserDashboardForm,
 )
 
 
@@ -393,3 +402,354 @@ def site_settings(request):
         form = SiteConfigurationForm(instance=config)
 
     return render(request, "dashboard/site_settings.html", {"form": form})
+
+
+# ===== USERS =====
+
+@staff_required
+def user_list(request):
+    q = request.GET.get("q", "").strip()
+    role_filter = request.GET.get("role", "").strip()
+
+    users = User.objects.select_related("profile").order_by("-date_joined")
+
+    if q:
+        users = users.filter(
+            Q(username__icontains=q)
+            | Q(email__icontains=q)
+            | Q(first_name__icontains=q)
+            | Q(last_name__icontains=q)
+        )
+    if role_filter == "staff":
+        users = users.filter(is_staff=True)
+    elif role_filter == "active":
+        users = users.filter(is_active=True)
+    elif role_filter == "inactive":
+        users = users.filter(is_active=False)
+
+    context = {
+        "users": users,
+        "summary": {
+            "total": User.objects.count(),
+            "staff": User.objects.filter(is_staff=True).count(),
+            "active": User.objects.filter(is_active=True).count(),
+        },
+    }
+    return render(request, "dashboard/user_list.html", context)
+
+
+@staff_required
+def user_create(request):
+    if request.method == "POST":
+        form = UserDashboardForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, f"Utilisateur « {user.username} » créé avec succès.")
+            return redirect("dashboard:user_list")
+    else:
+        form = UserDashboardForm()
+
+    return render(request, "dashboard/user_form.html", {"form": form, "title": "Nouvel utilisateur"})
+
+
+@staff_required
+def user_edit(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    if request.method == "POST":
+        form = UserDashboardForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Utilisateur « {user.username} » modifié.")
+            return redirect("dashboard:user_list")
+    else:
+        form = UserDashboardForm(instance=user)
+
+    return render(request, "dashboard/user_form.html", {"form": form, "title": f"Modifier : {user.username}"})
+
+
+@staff_required
+def user_delete(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    if request.method == "POST":
+        username = user.username
+        user.delete()
+        messages.success(request, f"Utilisateur « {username} » supprimé.")
+        return redirect("dashboard:user_list")
+    return render(request, "dashboard/confirm_delete.html", {
+        "object": user,
+        "cancel_url": reverse_lazy("dashboard:user_list"),
+    })
+
+
+# ===== COUPONS =====
+
+@staff_required
+def coupon_list(request):
+    q = request.GET.get("q", "").strip()
+    coupons = Coupon.objects.all().order_by("-created_at")
+    if q:
+        coupons = coupons.filter(code__icontains=q)
+    context = {
+        "coupons": coupons,
+        "summary": {
+            "total": Coupon.objects.count(),
+            "active": Coupon.objects.filter(is_active=True).count(),
+        },
+    }
+    return render(request, "dashboard/coupon_list.html", context)
+
+
+@staff_required
+def coupon_create(request):
+    if request.method == "POST":
+        form = CouponForm(request.POST)
+        if form.is_valid():
+            coupon = form.save()
+            messages.success(request, f"Coupon « {coupon.code} » créé.")
+            return redirect("dashboard:coupon_list")
+    else:
+        form = CouponForm()
+
+    return render(request, "dashboard/coupon_form.html", {"form": form, "title": "Nouveau coupon"})
+
+
+@staff_required
+def coupon_edit(request, pk):
+    coupon = get_object_or_404(Coupon, pk=pk)
+    if request.method == "POST":
+        form = CouponForm(request.POST, instance=coupon)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Coupon « {coupon.code} » modifié.")
+            return redirect("dashboard:coupon_list")
+    else:
+        form = CouponForm(instance=coupon)
+
+    return render(request, "dashboard/coupon_form.html", {"form": form, "title": f"Modifier : {coupon.code}"})
+
+
+@staff_required
+def coupon_delete(request, pk):
+    coupon = get_object_or_404(Coupon, pk=pk)
+    if request.method == "POST":
+        code = coupon.code
+        coupon.delete()
+        messages.success(request, f"Coupon « {code} » supprimé.")
+        return redirect("dashboard:coupon_list")
+    return render(request, "dashboard/confirm_delete.html", {
+        "object": coupon,
+        "cancel_url": reverse_lazy("dashboard:coupon_list"),
+    })
+
+
+# ===== SHIPPING ZONES =====
+
+@staff_required
+def shipping_list(request):
+    zones = ShippingZone.objects.all().order_by("order", "name")
+    context = {
+        "shipping_zones": zones,
+        "summary": {
+            "total": zones.count(),
+            "active": zones.filter(is_active=True).count(),
+        },
+    }
+    return render(request, "dashboard/shipping_list.html", context)
+
+
+@staff_required
+def shipping_create(request):
+    if request.method == "POST":
+        form = ShippingZoneForm(request.POST)
+        if form.is_valid():
+            zone = form.save()
+            messages.success(request, f"Zone de livraison « {zone.name} » créée.")
+            return redirect("dashboard:shipping_list")
+    else:
+        form = ShippingZoneForm()
+
+    return render(request, "dashboard/shipping_form.html", {"form": form, "title": "Nouvelle zone de livraison"})
+
+
+@staff_required
+def shipping_edit(request, pk):
+    zone = get_object_or_404(ShippingZone, pk=pk)
+    if request.method == "POST":
+        form = ShippingZoneForm(request.POST, instance=zone)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Zone de livraison « {zone.name} » modifiée.")
+            return redirect("dashboard:shipping_list")
+    else:
+        form = ShippingZoneForm(instance=zone)
+
+    return render(request, "dashboard/shipping_form.html", {"form": form, "title": f"Modifier : {zone.name}"})
+
+
+@staff_required
+def shipping_delete(request, pk):
+    zone = get_object_or_404(ShippingZone, pk=pk)
+    if request.method == "POST":
+        name = zone.name
+        zone.delete()
+        messages.success(request, f"Zone de livraison « {name} » supprimée.")
+        return redirect("dashboard:shipping_list")
+    return render(request, "dashboard/confirm_delete.html", {
+        "object": zone,
+        "cancel_url": reverse_lazy("dashboard:shipping_list"),
+    })
+
+
+# ===== TAX RATES =====
+
+@staff_required
+def tax_list(request):
+    taxes = TaxRate.objects.all().order_by("-rate")
+    context = {
+        "taxes": taxes,
+        "summary": {
+            "total": taxes.count(),
+            "active": taxes.filter(is_active=True).count(),
+        },
+    }
+    return render(request, "dashboard/tax_list.html", context)
+
+
+@staff_required
+def tax_create(request):
+    if request.method == "POST":
+        form = TaxRateForm(request.POST)
+        if form.is_valid():
+            tax = form.save()
+            messages.success(request, f"Taxe « {tax.name} » créée.")
+            return redirect("dashboard:tax_list")
+    else:
+        form = TaxRateForm()
+
+    return render(request, "dashboard/tax_form.html", {"form": form, "title": "Nouveau taux de taxe"})
+
+
+@staff_required
+def tax_edit(request, pk):
+    tax = get_object_or_404(TaxRate, pk=pk)
+    if request.method == "POST":
+        form = TaxRateForm(request.POST, instance=tax)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Taxe « {tax.name} » modifiée.")
+            return redirect("dashboard:tax_list")
+    else:
+        form = TaxRateForm(instance=tax)
+
+    return render(request, "dashboard/tax_form.html", {"form": form, "title": f"Modifier : {tax.name}"})
+
+
+@staff_required
+def tax_delete(request, pk):
+    tax = get_object_or_404(TaxRate, pk=pk)
+    if request.method == "POST":
+        name = tax.name
+        tax.delete()
+        messages.success(request, f"Taxe « {name} » supprimée.")
+        return redirect("dashboard:tax_list")
+    return render(request, "dashboard/confirm_delete.html", {
+        "object": tax,
+        "cancel_url": reverse_lazy("dashboard:tax_list"),
+    })
+
+
+# ===== ACTIVITY LOG =====
+
+@staff_required
+def activity_log(request):
+    logs = ActivityLog.objects.select_related("user").order_by("-created_at")
+    action_filter = request.GET.get("action", "").strip()
+    if action_filter in dict(ActivityLog.ACTION_CHOICES):
+        logs = logs.filter(action=action_filter)
+    context = {
+        "logs": logs,
+        "action_choices": ActivityLog.ACTION_CHOICES,
+    }
+    return render(request, "dashboard/activity_log.html", context)
+
+
+# ===== PAYMENT METHODS =====
+
+@staff_required
+def payment_list(request):
+    methods = PaymentMethod.objects.all().order_by("method")
+    context = {
+        "methods": methods,
+        "summary": {
+            "total": methods.count(),
+            "active": methods.filter(is_active=True).count(),
+        },
+    }
+    return render(request, "dashboard/payment_list.html", context)
+
+
+@staff_required
+def payment_create(request):
+    if request.method == "POST":
+        form = PaymentMethodForm(request.POST)
+        if form.is_valid():
+            pm = form.save()
+            messages.success(request, f"Mode de paiement « {pm.get_method_display()} » créé.")
+            return redirect("dashboard:payment_list")
+    else:
+        form = PaymentMethodForm()
+
+    return render(request, "dashboard/payment_form.html", {"form": form, "title": "Nouveau mode de paiement"})
+
+
+@staff_required
+def payment_edit(request, pk):
+    pm = get_object_or_404(PaymentMethod, pk=pk)
+    if request.method == "POST":
+        form = PaymentMethodForm(request.POST, instance=pm)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Mode de paiement « {pm.get_method_display()} » modifié.")
+            return redirect("dashboard:payment_list")
+    else:
+        form = PaymentMethodForm(instance=pm)
+
+    return render(request, "dashboard/payment_form.html", {"form": form, "title": f"Modifier : {pm.get_method_display()}"})
+
+
+@staff_required
+def payment_delete(request, pk):
+    pm = get_object_or_404(PaymentMethod, pk=pk)
+    if request.method == "POST":
+        method_name = pm.get_method_display()
+        pm.delete()
+        messages.success(request, f"Mode de paiement « {method_name} » supprimé.")
+        return redirect("dashboard:payment_list")
+    return render(request, "dashboard/confirm_delete.html", {
+        "object": pm,
+        "cancel_url": reverse_lazy("dashboard:payment_list"),
+    })
+
+
+# ===== BACKUP =====
+
+@staff_required
+def database_backup(request):
+    """Télécharge une copie de sauvegarde de la base de données."""
+    db_path = settings.DATABASES["default"]["NAME"]
+    db_file = Path(db_path)
+
+    if not db_file.exists():
+        messages.error(request, "Fichier de base de données introuvable.")
+        return redirect("dashboard:index")
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"backup_{timestamp}.sqlite3"
+
+    response = FileResponse(
+        open(db_file, "rb"),
+        content_type="application/octet-stream",
+        as_attachment=True,
+        filename=filename,
+    )
+    return response

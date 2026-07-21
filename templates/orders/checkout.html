@@ -18,16 +18,51 @@
             <div class="col-lg-7">
                 <div class="content-panel p-4">
                     <h2 class="h4 mb-4">Informations client</h2>
-                    <form method="post" class="row g-3">
+                    <form method="post" class="row g-3" id="checkoutForm">
                         {% csrf_token %}
                         {% for field in form %}
-                            <div class="{% if field.name == 'notes' %}col-12{% else %}col-md-6{% endif %}">
-                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                {{ field }}
-                                {% if field.errors %}
-                                    <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
-                                {% endif %}
-                            </div>
+                            {% if field.name == 'payment_method' or field.name == 'payment_phone' or field.name == 'payment_reference' %}
+                                <div class="col-12 payment-section">
+                                    {% if field.name == 'payment_method' %}
+                                        <hr class="my-4">
+                                        <h2 class="h4 mb-4">Paiement en ligne</h2>
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i>Sélectionnez votre mode de paiement, effectuez le transfert, puis saisissez la référence.
+                                        </div>
+                                    {% endif %}
+                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {% if field.name == 'payment_phone' %}
+                                        <div id="payment_phone_container">
+                                            {{ field }}
+                                        </div>
+                                        <div id="phone_display" class="mt-2 text-primary fw-bold d-none"></div>
+                                    {% else %}
+                                        {{ field }}
+                                    {% endif %}
+                                    {% if field.help_text %}
+                                        <div class="form-text">{{ field.help_text }}</div>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                        <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+                            {% elif field.name == 'notes' %}
+                                <div class="col-12">
+                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="col-md-6">
+                                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div class="text-danger small mt-1">{{ field.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
                         {% endfor %}
                         <div class="col-12 d-grid d-md-flex gap-3 pt-2">
                             <button class="btn btn-primary btn-lg px-4">Confirmer la commande</button>
@@ -60,4 +95,47 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.payment-section {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const methodSelect = document.getElementById('id_payment_method');
+    const phoneInput = document.getElementById('id_payment_phone');
+    const phoneDisplay = document.getElementById('phone_display');
+
+    // Map of payment method values to phone numbers from our choices
+    const phoneMap = {};
+    {% for pm in payment_methods %}
+    phoneMap['{{ pm.method }}'] = '{{ pm.phone_number }}';
+    {% endfor %}
+
+    function updatePhone() {
+        const selected = methodSelect.value;
+        const phone = phoneMap[selected] || '';
+        phoneInput.value = phone;
+        if (phone && selected) {
+            phoneDisplay.textContent = 'Envoyez le paiement à ce numéro : ' + phone;
+            phoneDisplay.classList.remove('d-none');
+        } else {
+            phoneDisplay.classList.add('d-none');
+        }
+    }
+
+    methodSelect.addEventListener('change', updatePhone);
+    // Initialize on page load
+    updatePhone();
+});
+</script>
 {% endblock %}

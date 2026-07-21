@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.title }} | {{ site_config.site_name }}{% endblock %}
+
+{% block meta_description %}{{ page.content|striptags|truncatewords:30 }}{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="content-panel p-4 p-lg-5">
+                    <span class="eyebrow">{{ page.get_slug_display }}</span>
+                    <h1 class="display-6 fw-bold mb-4">{{ page.title }}</h1>
+                    <div class="legal-content">
+                        {{ page.content|safe|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

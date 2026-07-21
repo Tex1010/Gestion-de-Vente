@@ -3,9 +3,12 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from catalog.models import Product, ProductVariant
+
+from core.models import PaymentMethod
 
 from .cart import Cart
 from .forms import CheckoutForm
@@ -156,7 +159,18 @@ def checkout(request):
         form = CheckoutForm(request.POST)
         if form.is_valid():
             with transaction.atomic():
-                order = Order.objects.create(user=request.user, **form.cleaned_data)
+                order = Order.objects.create(
+                    user=request.user,
+                    full_name=form.cleaned_data["full_name"],
+                    phone=form.cleaned_data["phone"],
+                    email=form.cleaned_data["email"],
+                    city=form.cleaned_data["city"],
+                    address=form.cleaned_data["address"],
+                    notes=form.cleaned_data["notes"],
+                    payment_method=form.cleaned_data["payment_method"],
+                    payment_phone=form.cleaned_data.get("payment_phone", ""),
+                    payment_reference=form.cleaned_data["payment_reference"],
+                )
                 for item in cart_items:
                     product = Product.objects.select_for_update().get(pk=item["product_id"])
                     variant = None
@@ -195,6 +209,8 @@ def checkout(request):
         }
         form = CheckoutForm(initial=initial)
 
+    payment_methods = PaymentMethod.objects.filter(is_active=True)
+
     return render(
         request,
         "orders/checkout.html",
@@ -202,6 +218,7 @@ def checkout(request):
             "form": form,
             "cart": cart_items,
             "cart_total": cart.get_total_price(),
+            "payment_methods": payment_methods,
         },
     )
 
@@ -216,3 +233,30 @@ def order_success(request, order_id):
             pk=order_id,
         )
     return render(request, "orders/order_success.html", {"order": order})
+
+
+@login_required
+def cancel_order(request, order_id):
+    """Permet au client d'annuler une commande si elle est encore en attente."""
+    order = get_object_or_404(
+        _get_user_order_queryset(request.user),
+        pk=order_id,
+    )
+    if order.status != Order.STATUS_PENDING:
+        messages.error(request, "Cette commande ne peut plus être annulée.")
+        return redirect("orders:order_success", order_id=order.pk)
+
+    with transaction.atomic():
+        # Restaurer le stock
+        for item in order.items.select_for_update().select_related("product", "variant"):
+            if item.variant:
+                item.variant.stock += item.quantity
+                item.variant.save(update_fields=["stock"])
+            item.product.stock += item.quantity
+            item.product.save(update_fields=["stock"])
+
+        order.status = Order.STATUS_CANCELLED
+        order.save(update_fields=["status", "updated_at"])
+
+    messages.success(request, f"Votre commande #{order.id} a été annulée.")
+    return redirect("orders:order_success", order_id=order.pk)

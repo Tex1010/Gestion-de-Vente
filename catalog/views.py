@@ -1,3 +1,4 @@
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, render
 
@@ -11,6 +12,7 @@ def product_list(request, category_slug=None):
     sort_by = request.GET.get("tri", "-created_at")
     min_price = request.GET.get("prix_min", "").strip()
     max_price = request.GET.get("prix_max", "").strip()
+    page = request.GET.get("page", 1)
 
     # Catégorie spécifique (via URL)
     category = None
@@ -68,15 +70,27 @@ def product_list(request, category_slug=None):
         )
     )
 
+    # Pagination
+    paginator = Paginator(products, 12)
+    try:
+        products_page = paginator.page(page)
+    except PageNotAnInteger:
+        products_page = paginator.page(1)
+    except EmptyPage:
+        products_page = paginator.page(paginator.num_pages)
+
     context = {
         "category": category,
-        "products": products,
+        "products": products_page,
         "categories": categories,
         "search_term": search_term,
         "selected_category": selected_category,
         "current_sort": sort_by,
         "min_price": min_price,
         "max_price": max_price,
+        "paginator": paginator,
+        "page_obj": products_page,
+        "is_paginated": products_page.has_other_pages(),
     }
     return render(request, "catalog/product_list.html", context)
 

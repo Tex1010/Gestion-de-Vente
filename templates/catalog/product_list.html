@@ -129,6 +129,28 @@
                         {% include "includes/product_card.html" %}
                     {% endfor %}
                 </div>
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav aria-label="Navigation des pages" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link rounded-pill" href="?{% if search_term %}q={{ search_term }}&{% endif %}{% if selected_category %}categorie={{ selected_category }}&{% endif %}{% if min_price %}prix_min={{ min_price }}&{% endif %}{% if max_price %}prix_max={{ max_price }}&{% endif %}page={{ page_obj.previous_page_number }}">&laquo; Précédent</a>
+                        </li>
+                        {% endif %}
+                        {% for num in paginator.page_range %}
+                        <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                            <a class="page-link rounded-pill" href="?{% if search_term %}q={{ search_term }}&{% endif %}{% if selected_category %}categorie={{ selected_category }}&{% endif %}{% if min_price %}prix_min={{ min_price }}&{% endif %}{% if max_price %}prix_max={{ max_price }}&{% endif %}page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link rounded-pill" href="?{% if search_term %}q={{ search_term }}&{% endif %}{% if selected_category %}categorie={{ selected_category }}&{% endif %}{% if min_price %}prix_min={{ min_price }}&{% endif %}{% if max_price %}prix_max={{ max_price }}&{% endif %}page={{ page_obj.next_page_number }}">Suivant &raquo;</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
                 {% else %}
                 <div class="text-center py-5">
                     <i class="bi bi-search" style="font-size:3rem;color:#dee2e6;"></i>

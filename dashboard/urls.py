@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    activity_log,
     banner_create,
     banner_delete,
     banner_edit,
@@ -9,16 +10,37 @@ from .views import (
     category_delete,
     category_edit,
     category_list,
+    coupon_create,
+    coupon_delete,
+    coupon_edit,
+    coupon_list,
     DashboardLoginView,
     DashboardLogoutView,
     dashboard_home,
+    database_backup,
     order_detail,
     order_list,
+    payment_create,
+    payment_delete,
+    payment_edit,
+    payment_list,
     product_create,
     product_delete,
     product_edit,
     product_list,
+    shipping_create,
+    shipping_delete,
+    shipping_edit,
+    shipping_list,
     site_settings,
+    tax_create,
+    tax_delete,
+    tax_edit,
+    tax_list,
+    user_create,
+    user_delete,
+    user_edit,
+    user_list,
 )
 
 app_name = "dashboard"
@@ -47,6 +69,35 @@ urlpatterns = [
     path("bannieres/ajouter/", banner_create, name="banner_create"),
     path("bannieres/<int:pk>/modifier/", banner_edit, name="banner_edit"),
     path("bannieres/<int:pk>/supprimer/", banner_delete, name="banner_delete"),
+    # Users
+    path("utilisateurs/", user_list, name="user_list"),
+    path("utilisateurs/ajouter/", user_create, name="user_create"),
+    path("utilisateurs/<int:pk>/modifier/", user_edit, name="user_edit"),
+    path("utilisateurs/<int:pk>/supprimer/", user_delete, name="user_delete"),
+    # Coupons
+    path("coupons/", coupon_list, name="coupon_list"),
+    path("coupons/ajouter/", coupon_create, name="coupon_create"),
+    path("coupons/<int:pk>/modifier/", coupon_edit, name="coupon_edit"),
+    path("coupons/<int:pk>/supprimer/", coupon_delete, name="coupon_delete"),
+    # Shipping
+    path("livraison/", shipping_list, name="shipping_list"),
+    path("livraison/ajouter/", shipping_create, name="shipping_create"),
+    path("livraison/<int:pk>/modifier/", shipping_edit, name="shipping_edit"),
+    path("livraison/<int:pk>/supprimer/", shipping_delete, name="shipping_delete"),
+    # Taxes
+    path("taxes/", tax_list, name="tax_list"),
+    path("taxes/ajouter/", tax_create, name="tax_create"),
+    path("taxes/<int:pk>/modifier/", tax_edit, name="tax_edit"),
+    path("taxes/<int:pk>/supprimer/", tax_delete, name="tax_delete"),
+    # Activity Log
+    path("journal/", activity_log, name="activity_log"),
+    # Backup
+    path("sauvegarde/", database_backup, name="database_backup"),
+    # Payment methods
+    path("paiements/", payment_list, name="payment_list"),
+    path("paiements/ajouter/", payment_create, name="payment_create"),
+    path("paiements/<int:pk>/modifier/", payment_edit, name="payment_edit"),
+    path("paiements/<int:pk>/supprimer/", payment_delete, name="payment_delete"),
     # Site settings
     path("site/", site_settings, name="site_settings"),
 ]

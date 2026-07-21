@@ -182,13 +182,28 @@ body {
 }
 
 .social-whatsapp {
-    bottom: 5.5rem;
+    bottom: 11.5rem;
     background: #25d366;
 }
 
 .social-facebook {
-    bottom: 1.5rem;
+    bottom: 9rem;
     background: #1877f2;
+}
+
+.social-instagram {
+    bottom: 6.5rem;
+    background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af);
+}
+
+.social-telegram {
+    bottom: 4rem;
+    background: #0088cc;
+}
+
+.social-tiktok {
+    bottom: 1.5rem;
+    background: #111111;
 }
 
 .success-icon {

@@ -1,0 +1,64 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Livraison{% endblock %}
+{% block page_title %}Zones de livraison{% endblock %}
+
+{% block content %}
+<div class="card-panel mb-4">
+    <div class="card-panel-header">
+        <a href="{% url 'dashboard:shipping_create' %}" class="btn-db-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nouvelle zone
+        </a>
+    </div>
+</div>
+
+<div class="stats-grid-sm">
+    <div class="stat-card mini purple"><span>{{ summary.total }}</span> Total</div>
+    <div class="stat-card mini green"><span>{{ summary.active }}</span> Actives</div>
+</div>
+
+<div class="card-panel">
+    <div class="card-panel-body p-0">
+        <table class="table-db">
+            <thead>
+                <tr>
+                    <th>Zone</th>
+                    <th>Villes</th>
+                    <th>Frais de base</th>
+                    <th>Livraison offerte</th>
+                    <th>Délai</th>
+                    <th>Ordre</th>
+                    <th>Statut</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for zone in shipping_zones %}
+                <tr>
+                    <td><strong>{{ zone.name }}</strong></td>
+                    <td class="text-soft">{{ zone.cities|truncatewords:8|default:"-" }}</td>
+                    <td>{{ zone.base_cost|floatformat:0 }} Ar</td>
+                    <td>{% if zone.free_shipping_min %}&ge; {{ zone.free_shipping_min|floatformat:0 }} Ar{% else %}-{% endif %}</td>
+                    <td>{{ zone.estimated_days|default:"-" }}</td>
+                    <td>{{ zone.order }}</td>
+                    <td>
+                        {% if zone.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'dashboard:shipping_edit' zone.pk %}" class="btn-icon" title="Modifier"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'dashboard:shipping_delete' zone.pk %}" class="btn-icon text-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8"><div class="empty-state"><i class="bi bi-truck"></i><h6>Aucune zone de livraison</h6></div></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

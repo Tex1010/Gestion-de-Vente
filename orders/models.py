@@ -43,6 +43,24 @@ class Order(models.Model):
         default=STATUS_PENDING,
     )
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    payment_method = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name="Mode de paiement",
+    )
+    payment_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name="Numéro de paiement",
+    )
+    payment_reference = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="Référence de paiement",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -53,6 +71,14 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Commande #{self.pk} - {self.full_name}"
+
+    def get_payment_method_display(self):
+        """Retourne le libellé du mode de paiement."""
+        from core.models import PaymentMethod
+        for method, label in PaymentMethod.METHOD_CHOICES:
+            if method == self.payment_method:
+                return label
+        return self.payment_method or ""
 
     def recalculate_total(self):
         total = sum(

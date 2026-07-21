@@ -1,9 +1,10 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
 from catalog.models import Banner, Category, Product, ProductImage, ProductVariant
-from core.models import SiteConfiguration
+from core.models import Coupon, PaymentMethod, ShippingZone, SiteConfiguration, TaxRate
 
 
 class DashboardAuthenticationForm(AuthenticationForm):
@@ -242,4 +243,122 @@ class SiteConfigurationForm(forms.ModelForm):
             "primary_color": forms.TextInput(attrs={"class": "form-control", "placeholder": "#0d6efd"}),
             "secondary_color": forms.TextInput(attrs={"class": "form-control", "placeholder": "#6c757d"}),
             "footer_text": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+        }
+
+
+class UserDashboardForm(forms.ModelForm):
+    """Formulaire pour gérer un utilisateur depuis le dashboard."""
+
+    ROLE_CHOICES = [
+        ("client", "Client"),
+        ("admin", "Super Admin"),
+    ]
+
+    password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={"class": "form-control", "autocomplete": "new-password"}),
+        label="Mot de passe",
+        help_text="Requis pour un nouvel utilisateur. Laissez vide pour ne pas modifier.",
+    )
+    role = forms.ChoiceField(
+        choices=ROLE_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        label="Rôle",
+        help_text="Choisissez le rôle de l'utilisateur",
+    )
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "first_name", "last_name", "is_active"]
+        widgets = {
+            "username": forms.TextInput(attrs={"class": "form-control", "required": True}),
+            "email": forms.EmailInput(attrs={"class": "form-control"}),
+            "first_name": forms.TextInput(attrs={"class": "form-control"}),
+            "last_name": forms.TextInput(attrs={"class": "form-control"}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            # En mode édition, pré-remplir le role
+            if self.instance.is_superuser:
+                self.fields["role"].initial = "admin"
+            else:
+                self.fields["role"].initial = "client"
+            self.fields["password"].required = False
+        else:
+            self.fields["password"].required = True
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        role = self.cleaned_data.get("role")
+        if role == "admin":
+            user.is_staff = True
+            user.is_superuser = True
+        else:
+            user.is_staff = False
+            user.is_superuser = False
+        password = self.cleaned_data.get("password")
+        if password:
+            user.set_password(password)
+        if commit:
+            user.save()
+        return user
+
+
+class PaymentMethodForm(forms.ModelForm):
+    class Meta:
+        model = PaymentMethod
+        fields = ["method", "phone_number", "is_active"]
+        widgets = {
+            "method": forms.Select(attrs={"class": "form-select"}),
+            "phone_number": forms.TextInput(attrs={"class": "form-control", "required": True, "placeholder": "+261 34 00 000 00"}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+
+class CouponForm(forms.ModelForm):
+    class Meta:
+        model = Coupon
+        fields = [
+            "code", "discount_type", "discount_value", "min_order_amount",
+            "max_uses", "is_active", "valid_from", "valid_to",
+        ]
+        widgets = {
+            "code": forms.TextInput(attrs={"class": "form-control", "required": True}),
+            "discount_type": forms.Select(attrs={"class": "form-select"}),
+            "discount_value": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "min_order_amount": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "max_uses": forms.NumberInput(attrs={"class": "form-control", "min": 0}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "valid_from": forms.DateTimeInput(attrs={"class": "form-control", "type": "datetime-local"}),
+            "valid_to": forms.DateTimeInput(attrs={"class": "form-control", "type": "datetime-local"}),
+        }
+
+
+class ShippingZoneForm(forms.ModelForm):
+    class Meta:
+        model = ShippingZone
+        fields = ["name", "cities", "base_cost", "free_shipping_min", "estimated_days", "is_active", "order"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control", "required": True}),
+            "cities": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "base_cost": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "free_shipping_min": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "estimated_days": forms.TextInput(attrs={"class": "form-control"}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "order": forms.NumberInput(attrs={"class": "form-control", "min": 0}),
+        }
+
+
+class TaxRateForm(forms.ModelForm):
+    class Meta:
+        model = TaxRate
+        fields = ["name", "rate", "is_active", "is_default"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control", "required": True}),
+            "rate": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "is_default": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }

@@ -1,0 +1,58 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Journal d'activité{% endblock %}
+{% block page_title %}Journal d'activité{% endblock %}
+
+{% block content %}
+<div class="card-panel mb-4">
+    <div class="card-panel-header">
+        <form method="get">
+            <select name="action" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+                <option value="">Toutes les actions</option>
+                {% for key, label in action_choices %}
+                <option value="{{ key }}" {% if request.GET.action == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        <span class="text-soft small">{{ logs.count }} entrée{{ logs.count|pluralize }}</span>
+    </div>
+</div>
+
+<div class="card-panel">
+    <div class="card-panel-body p-0">
+        <table class="table-db">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Utilisateur</th>
+                    <th>Action</th>
+                    <th>Modèle</th>
+                    <th>Objet</th>
+                    <th>Détails</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="text-soft" style="white-space:nowrap;">{{ log.created_at|date:"d/m/Y H:i" }}</td>
+                    <td>{{ log.user.username|default:"Système" }}</td>
+                    <td>
+                        <span class="badge {% if log.action == 'create' %}bg-success{% elif log.action == 'update' %}bg-primary{% elif log.action == 'delete' %}bg-danger{% elif log.action == 'login' %}bg-info{% elif log.action == 'order_status' %}bg-purple{% else %}bg-secondary{% endif %}">
+                            {{ log.get_action_display }}
+                        </span>
+                    </td>
+                    <td>{{ log.model_name|default:"-" }}</td>
+                    <td>{{ log.object_repr|truncatewords:6|default:"-" }}</td>
+                    <td class="text-soft small">{{ log.details|truncatewords:10|default:"-" }}</td>
+                    <td class="text-soft small">{{ log.ip_address|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7"><div class="empty-state"><i class="bi bi-clock-history"></i><h6>Aucune activité</h6></div></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

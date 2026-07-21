@@ -1,0 +1,64 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Taxes{% endblock %}
+{% block page_title %}Taux de taxe{% endblock %}
+
+{% block content %}
+<div class="card-panel mb-4">
+    <div class="card-panel-header">
+        <a href="{% url 'dashboard:tax_create' %}" class="btn-db-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nouveau taux
+        </a>
+    </div>
+</div>
+
+<div class="stats-grid-sm">
+    <div class="stat-card mini purple"><span>{{ summary.total }}</span> Total</div>
+    <div class="stat-card mini green"><span>{{ summary.active }}</span> Actifs</div>
+</div>
+
+<div class="card-panel">
+    <div class="card-panel-body p-0">
+        <table class="table-db">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Taux</th>
+                    <th>Défaut</th>
+                    <th>Statut</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tax in taxes %}
+                <tr>
+                    <td><strong>{{ tax.name }}</strong></td>
+                    <td>{{ tax.rate }}%</td>
+                    <td>
+                        {% if tax.is_default %}
+                            <span class="badge bg-info">Par défaut</span>
+                        {% else %}
+                            <span class="text-soft">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if tax.is_active %}
+                            <span class="badge bg-success">Actif</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inactif</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'dashboard:tax_edit' tax.pk %}" class="btn-icon" title="Modifier"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'dashboard:tax_delete' tax.pk %}" class="btn-icon text-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5"><div class="empty-state"><i class="bi bi-percent"></i><h6>Aucun taux de taxe</h6></div></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

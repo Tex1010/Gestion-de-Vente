@@ -35,21 +35,50 @@
                     <i class="bi bi-speedometer2"></i>
                     Tableau de bord
                 </a>
-                <a class="{% if request.resolver_match.url_name == 'product_list' %}active{% endif %}" href="{% url 'dashboard:product_list' %}">
+                <a class="{% if 'product' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:product_list' %}">
                     <i class="bi bi-box-seam"></i>
                     Produits
                 </a>
-                <a class="{% if request.resolver_match.url_name == 'category_list' %}active{% endif %}" href="{% url 'dashboard:category_list' %}">
+                <a class="{% if 'category' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:category_list' %}">
                     <i class="bi bi-tags"></i>
-                    Categories
+                    Catégories
                 </a>
-                <a class="{% if request.resolver_match.url_name == 'order_list' %}active{% endif %}" href="{% url 'dashboard:order_list' %}">
+                <a class="{% if 'order' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:order_list' %}">
                     <i class="bi bi-receipt"></i>
                     Commandes
                 </a>
                 <a class="{% if 'banner' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:banner_list' %}">
                     <i class="bi bi-images"></i>
                     Bannières / Slider
+                </a>
+                <a class="{% if 'coupon' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:coupon_list' %}">
+                    <i class="bi bi-ticket-perforated"></i>
+                    Coupons
+                </a>
+                <a class="{% if 'shipping' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:shipping_list' %}">
+                    <i class="bi bi-truck"></i>
+                    Livraison
+                </a>
+                <a class="{% if 'tax' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:tax_list' %}">
+                    <i class="bi bi-percent"></i>
+                    Taxes
+                </a>
+                <a class="{% if 'payment' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:payment_list' %}">
+                    <i class="bi bi-credit-card"></i>
+                    Paiements
+                </a>
+                <a class="{% if 'user' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:user_list' %}">
+                    <i class="bi bi-people"></i>
+                    Utilisateurs
+                </a>
+                <a class="{% if 'activity' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'dashboard:activity_log' %}">
+                    <i class="bi bi-clock-history"></i>
+                    Journal
+                </a>
+                <hr class="my-2" style="border-color: rgba(255,255,255,0.06);">
+                <a href="{% url 'dashboard:database_backup' %}" style="color: #94a3b8;">
+                    <i class="bi bi-download"></i>
+                    Sauvegarde BD
                 </a>
                 <a class="{% if request.resolver_match.url_name == 'site_settings' %}active{% endif %}" href="{% url 'dashboard:site_settings' %}">
                     <i class="bi bi-gear"></i>
@@ -65,10 +94,6 @@
                 <a href="{% url 'dashboard:logout' %}">
                     <i class="bi bi-box-arrow-right"></i>
                     Deconnexion
-                </a>
-                <a href="/django-admin/" target="_blank" rel="noreferrer">
-                    <i class="bi bi-tools"></i>
-                    Admin Django
                 </a>
             </div>
         </aside>

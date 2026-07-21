@@ -849,6 +849,61 @@
   font-size: 1.05rem;
 }
 
+/* ===== MINI STATS GRID ===== */
+.stats-grid-sm {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.stat-card.mini {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--db-radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--db-text-soft);
+  min-width: 120px;
+}
+
+.stat-card.mini span {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--db-text);
+}
+
+.bg-purple {
+  background-color: #7c3aed !important;
+}
+
+.text-danger-soft {
+  color: #ef4444 !important;
+}
+
+/* ===== DB FORM ===== */
+.db-form .form-control,
+.db-form .form-select {
+  border-radius: 10px;
+  border: 1.5px solid var(--db-border);
+  padding: 0.6rem 0.9rem;
+  font-size: 0.9rem;
+  transition: border-color var(--db-transition), box-shadow var(--db-transition);
+}
+
+.db-form .form-control:focus,
+.db-form .form-select:focus {
+  border-color: var(--db-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.db-form .form-check-input:checked {
+  background-color: var(--db-primary);
+  border-color: var(--db-primary);
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 991.98px) {
   .dashboard-shell {

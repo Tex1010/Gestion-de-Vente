@@ -48,6 +48,23 @@
             </div>
         </div>
 
+        {% if order.payment_method %}
+        <div class="order-meta-grid">
+            <div class="order-meta-item">
+                <strong>Mode de paiement</strong>
+                <span>{{ order.get_payment_method_display }}</span>
+            </div>
+            <div class="order-meta-item">
+                <strong>Numéro de paiement</strong>
+                <span>{{ order.payment_phone }}</span>
+            </div>
+            <div class="order-meta-item">
+                <strong>Référence de paiement</strong>
+                <span>{{ order.payment_reference }}</span>
+            </div>
+        </div>
+        {% endif %}
+
         {% if order.notes %}
         <div class="mb-3">
             <strong class="d-block mb-1">Notes :</strong>
