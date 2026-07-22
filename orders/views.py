@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -8,7 +10,7 @@ from django.views.decorators.http import require_POST
 
 from catalog.models import Product, ProductVariant
 
-from core.models import PaymentMethod
+from core.models import PaymentMethod, ShippingZone
 from core.utils import log_activity
 
 from .cart import Cart
@@ -156,13 +158,31 @@ def checkout(request):
         )
         return redirect("orders:cart_detail")
 
+    cart_subtotal = cart.get_total_price()
+    shipping_zones = ShippingZone.objects.filter(is_active=True).order_by("order", "name")
+
     if request.method == "POST":
         form = CheckoutForm(request.POST)
         if form.is_valid():
-            # Get the merchant payment phone number from the selected PaymentMethod server-side
+            # Récupérer les données du formulaire
             payment_method_key = form.cleaned_data["payment_method"]
+            delivery_method = form.cleaned_data["delivery_method"]
+            shipping_zone_id = form.cleaned_data.get("shipping_zone", "")
+            shipping_cost = Decimal("0.00")
+            shipping_zone_name = ""
+
+            # Calculer les frais de livraison si livraison
+            if delivery_method == Order.DELIVERY_SHIP and shipping_zone_id:
+                try:
+                    zone = ShippingZone.objects.get(pk=int(shipping_zone_id), is_active=True)
+                    shipping_cost = zone.base_cost
+                    shipping_zone_name = zone.name
+                except (ShippingZone.DoesNotExist, ValueError, TypeError):
+                    shipping_cost = Decimal("0.00")
+                    shipping_zone_name = ""
+
+            # Récupérer le numéro marchand
             payment_phone = ""
-            
             try:
                 payment_method_obj = PaymentMethod.objects.get(
                     method=payment_method_key, is_active=True
@@ -179,21 +199,26 @@ def checkout(request):
                     full_name=form.cleaned_data["full_name"],
                     phone=form.cleaned_data["phone"],
                     email=form.cleaned_data["email"],
-                    city=form.cleaned_data["city"],
-                    address=form.cleaned_data["address"],
-                    notes=form.cleaned_data["notes"],
+                    city=form.cleaned_data.get("city", ""),
+                    address=form.cleaned_data.get("address", ""),
+                    notes=form.cleaned_data.get("notes", ""),
+                    delivery_method=delivery_method,
+                    shipping_zone_name=shipping_zone_name,
+                    shipping_cost=shipping_cost,
                     payment_method=payment_method_key,
                     payment_phone=payment_phone,
                     payment_reference=form.cleaned_data["payment_reference"],
                 )
-                # Store client payment phone in notes if not already there
-                if client_payment_phone and client_payment_phone not in order.notes:
+
+                # Stocker le numéro client dans les notes
+                if client_payment_phone:
+                    note = f"Numéro d'envoi du paiement : {client_payment_phone}"
                     if order.notes:
-                        order.notes = order.notes + f"\n\nNuméro d'envoi du paiement : {client_payment_phone}"
+                        order.notes = order.notes + f"\n\n{note}"
                     else:
-                        order.notes = f"Numéro d'envoi du paiement : {client_payment_phone}"
-                    order.save(update_fields=["notes"])
-                
+                        order.notes = note
+
+                # Créer les items
                 for item in cart_items:
                     product = Product.objects.select_for_update().get(pk=item["product_id"])
                     variant = None
@@ -218,15 +243,30 @@ def checkout(request):
                         variant.save(update_fields=["stock"])
                     product.stock = max(product.stock - item["quantity"], 0)
                     product.save(update_fields=["stock"])
-                order.recalculate_total()
+
+                # Calculer le total : produits + livraison
+                products_total = sum(
+                    (item.unit_price * item.quantity for item in order.items.all()),
+                    start=Decimal("0.00"),
+                )
+                order.total_amount = products_total + shipping_cost
+                order.save(update_fields=["total_amount", "notes", "updated_at"])
+
+                # Sauvegarder les notes si modifiées
+                if "notes" in order.get_dirty_fields() if hasattr(order, 'get_dirty_fields') else True:
+                    pass
+
                 cart.clear()
-            
+
             log_activity(
                 request.user, "create", "Commande", order.pk, f"Commande #{order.pk}",
-                f"Nouvelle commande #{order.pk} - {form.cleaned_data['full_name']} - Total: {order.total_amount} Ar - Paiement: {payment_method_key}",
+                f"Nouvelle commande #{order.pk} - {form.cleaned_data['full_name']} - "
+                f"Total: {order.total_amount} Ar - "
+                f"Réception: {'Livraison' if delivery_method == 'ship' else 'Retrait'} - "
+                f"Paiement: {payment_method_key}",
                 request.META.get("REMOTE_ADDR"),
             )
-            
+
             messages.success(request, "Votre commande a ete enregistree avec succes.")
             return redirect("orders:order_success", order_id=order.pk)
     else:
@@ -236,6 +276,7 @@ def checkout(request):
             "email": request.user.email,
             "city": getattr(request.user.profile, "city", ""),
             "address": getattr(request.user.profile, "address", ""),
+            "delivery_method": "pickup",
         }
         form = CheckoutForm(initial=initial)
 
@@ -247,8 +288,9 @@ def checkout(request):
         {
             "form": form,
             "cart": cart_items,
-            "cart_total": cart.get_total_price(),
+            "cart_total": cart_subtotal,
             "payment_methods": payment_methods,
+            "shipping_zones": shipping_zones,
         },
     )
 

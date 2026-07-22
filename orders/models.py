@@ -46,6 +46,30 @@ class Order(models.Model):
     city = models.CharField(max_length=120)
     address = models.CharField(max_length=255)
     notes = models.TextField(blank=True)
+    
+    # Mode de réception (Livraison ou Retrait)
+    DELIVERY_PICKUP = "pickup"
+    DELIVERY_SHIP = "ship"
+    DELIVERY_CHOICES = [
+        (DELIVERY_PICKUP, "Retrait sur place"),
+        (DELIVERY_SHIP, "Livraison"),
+    ]
+    delivery_method = models.CharField(
+        max_length=10,
+        choices=DELIVERY_CHOICES,
+        default=DELIVERY_PICKUP,
+        verbose_name="Mode de réception",
+    )
+    shipping_zone_name = models.CharField(
+        max_length=120,
+        blank=True,
+        verbose_name="Zone de livraison",
+    )
+    shipping_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0,
+        verbose_name="Frais de livraison",
+    )
+    
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
