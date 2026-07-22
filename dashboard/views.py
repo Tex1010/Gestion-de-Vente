@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LoginView
 from django.db.models import Count, Q, Sum
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -39,12 +39,34 @@ staff_required = user_passes_test(_staff_check, login_url=reverse_lazy("dashboar
 
 
 class DashboardLoginView(LoginView):
+    """
+    Connexion au dashboard.
+    Après authentification réussie, enregistre l'ID utilisateur
+    dans la session sous `_dashboard_authenticated_user_id`.
+    Ceci permet au DashboardAuthMiddleware de vérifier que l'utilisateur
+    est bien autorisé à accéder au dashboard.
+    """
     form_class = DashboardAuthenticationForm
     template_name = "dashboard/login.html"
     redirect_authenticated_user = True
 
+    def form_valid(self, form):
+        """Connecte l'utilisateur ET marque la session pour le dashboard."""
+        response = super().form_valid(form)
+        # Marquer la session comme authentifiée pour le dashboard
+        self.request.session["_dashboard_authenticated_user_id"] = self.request.user.id
+        self.request.session.save()
+        return response
+
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.user.is_staff:
+            # Vérifier si l'indicateur dashboard est déjà dans la session
+            dashboard_uid = request.session.get("_dashboard_authenticated_user_id")
+            if dashboard_uid == request.user.id:
+                return redirect("dashboard:index")
+            # Sinon, on le définit
+            request.session["_dashboard_authenticated_user_id"] = request.user.id
+            request.session.save()
             return redirect("dashboard:index")
         return super().dispatch(request, *args, **kwargs)
 
@@ -52,8 +74,30 @@ class DashboardLoginView(LoginView):
         return reverse_lazy("dashboard:index")
 
 
-class DashboardLogoutView(LogoutView):
-    next_page = reverse_lazy("dashboard:login")
+def dashboard_logout_view(request):
+    """
+    Déconnexion du dashboard UNIQUEMENT.
+    
+    Supprime l'indicateur `_dashboard_authenticated_user_id` de la session
+    mais ne déconnecte PAS l'utilisateur Django.
+    
+    Résultat :
+    - L'utilisateur n'a plus accès au dashboard (le middleware le redirige)
+    - L'utilisateur reste connecté sur le site client s'il l'était
+    - La session client (panier, etc.) est préservée
+    """
+    from django.contrib import messages
+
+    # Supprimer l'indicateur dashboard de la session
+    if "_dashboard_authenticated_user_id" in request.session:
+        del request.session["_dashboard_authenticated_user_id"]
+
+    # Marquer la session comme modifiée pour forcer la sauvegarde
+    request.session.modified = True
+    request.session.save()
+
+    messages.info(request, "Vous êtes déconnecté du tableau de bord.")
+    return redirect("dashboard:login")
 
 
 # ===== DASHBOARD HOME =====

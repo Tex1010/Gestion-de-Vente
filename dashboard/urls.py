@@ -15,8 +15,8 @@ from .views import (
     coupon_edit,
     coupon_list,
     DashboardLoginView,
-    DashboardLogoutView,
     dashboard_home,
+    dashboard_logout_view,
     database_backup,
     order_detail,
     order_list,
@@ -50,7 +50,7 @@ app_name = "dashboard"
 urlpatterns = [
     # Auth
     path("login/", DashboardLoginView.as_view(), name="login"),
-    path("logout/", DashboardLogoutView.as_view(), name="logout"),
+    path("logout/", dashboard_logout_view, name="logout"),
     # Home
     path("", dashboard_home, name="index"),
     # Products

@@ -36,10 +36,11 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "dashboard.middleware.SeparateDashboardSession",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "dashboard.middleware.NoCacheStaffMiddleware",
+    # Middleware custom
+    "dashboard.middleware.DashboardAuthMiddleware",
+    "dashboard.middleware.NoCacheProtectedPagesMiddleware",
 ]
 
 
@@ -116,6 +117,8 @@ LOGOUT_REDIRECT_URL = "accounts:login"
 DASHBOARD_LOGIN_URL = "dashboard:login"
 DASHBOARD_LOGIN_REDIRECT_URL = "dashboard:index"
 DASHBOARD_LOGOUT_REDIRECT_URL = "dashboard:login"
+# DASHBOARD_SESSION_KEY = "_dashboard_authenticated_user_id"  # Clé session pour le dashboard
+# (géré directement dans dashboard/middleware.py et dashboard/views.py)
 
 # Email (Console en dev, SMTP en prod)
 EMAIL_BACKEND = os.getenv(
@@ -143,3 +146,10 @@ SECURE_REFERRER_POLICY = "same-origin"
 
 # Empêcher le cache navigateur des pages protégées
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# Durée de vie de la session : 24h (86400 secondes)
+SESSION_COOKIE_AGE = 86400
+# Renouveler la session à chaque requête pour éviter l'expiration pendant l'utilisation
+SESSION_SAVE_EVERY_REQUEST = True
+# Nom unique du cookie de session (un seul cookie pour les deux espaces)
+SESSION_COOKIE_NAME = "sessionid"
+SESSION_COOKIE_PATH = "/"

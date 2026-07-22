@@ -1,86 +1,87 @@
 """
-Middleware pour sessions séparées entre dashboard et site public.
+Middleware pour la sécurisation du dashboard et la séparation
+des sessions client / administration.
 
-Permet à un admin d'être connecté au dashboard (/dashboard/)
-pendant qu'un client est connecté (ou pas) sur le site public,
-même depuis le même navigateur.
-
-Fonctionnement :
-- Pour /dashboard/ : cookie session = sessionid_dashboard, path = /dashboard/
-- Pour le reste : cookie session = sessionid, path = /
-- Les deux cookies coexistent sans s'écraser
-- Ajoute aussi des en-têtes Cache-Control pour empêcher l'accès
-  aux pages protégées après déconnexion via le bouton Retour
+Principe :
+- Session unique Django (cookie `sessionid` unique)
+- L'authentification dashboard utilise un indicateur
+  `_dashboard_authenticated_user_id` stocké dans la session
+- Dashboard logout : supprime UNIQUEMENT cet indicateur,
+  l'utilisateur reste connecté sur le site client
+- Client logout (Django standard) : vide toute la session,
+  ce qui supprime aussi l'indicateur dashboard
+- En-têtes Cache-Control systématiques sur toutes les pages protégées
+  pour empêcher l'accès via le bouton Retour après déconnexion
 """
 
 from django.conf import settings
-from django.utils.cache import add_never_cache_headers
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.utils.deprecation import MiddlewareMixin
 
 
-class SeparateDashboardSession:
+class DashboardAuthMiddleware(MiddlewareMixin):
     """
-    Utilise des cookies de session différents selon le chemin.
-    """
+    Vérifie que l'utilisateur accédant au dashboard possède
+    l'indicateur `_dashboard_authenticated_user_id` dans sa session.
 
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        if request.path.startswith("/dashboard/"):
-            settings.SESSION_COOKIE_NAME = "sessionid_dashboard"
-            settings.SESSION_COOKIE_PATH = "/dashboard/"
-            settings.CSRF_COOKIE_NAME = "csrftoken_dashboard"
-            settings.CSRF_COOKIE_PATH = "/dashboard/"
-        else:
-            settings.SESSION_COOKIE_NAME = "sessionid"
-            settings.SESSION_COOKIE_PATH = "/"
-            settings.CSRF_COOKIE_NAME = "csrftoken"
-            settings.CSRF_COOKIE_PATH = "/"
-
-        response = self.get_response(request)
-
-        # Ajouter des en-têtes anti-cache pour les pages protégées
-        if request.user.is_authenticated:
-            # Ne pas mettre en cache les pages authentifiées
-            add_never_cache_headers(response)
-
-        # Restaurer les valeurs par défaut
-        settings.SESSION_COOKIE_NAME = "sessionid"
-        settings.SESSION_COOKIE_PATH = "/"
-        settings.CSRF_COOKIE_NAME = "csrftoken"
-        settings.CSRF_COOKIE_PATH = "/"
-
-        return response
-
-
-class NoCacheStaffMiddleware:
-    """
-    Ajoute des en-têtes Cache-Control: no-cache pour les pages protégées
-    afin d'empêcher le navigateur de les mettre en cache.
-    Après une déconnexion, le bouton Retour ne pourra plus afficher
-    les pages protégées.
+    Sans cet indicateur, même un staff ne peut pas accéder au dashboard :
+    il est redirigé vers la page de connexion dashboard.
     """
 
-    def __init__(self, get_response):
-        self.get_response = get_response
+    def process_request(self, request):
+        if not request.path.startswith("/dashboard/"):
+            return None
 
-    def __call__(self, request):
-        response = self.get_response(request)
+        # Pages autorisées sans authentification dashboard
+        allowed_paths = (
+            "/dashboard/login/",
+            "/dashboard/logout/",
+        )
+        if any(request.path.startswith(p) for p in allowed_paths):
+            return None
 
-        # Ne pas mettre en cache les pages d'admin/dashboard
-        if request.path.startswith("/dashboard/"):
-            response["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-            response["Pragma"] = "no-cache"
-            response["Expires"] = "0"
+        # Vérifier la présence de l'indicateur dashboard dans la session
+        dashboard_uid = request.session.get("_dashboard_authenticated_user_id")
+        if not dashboard_uid:
+            return redirect(reverse("dashboard:login"))
 
-        # Ne pas mettre en cache les pages de compte client quand connecté
-        if request.path.startswith("/compte/") and request.user.is_authenticated:
-            response["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
-            response["Pragma"] = "no-cache"
-            response["Expires"] = "0"
+        # Vérifier que l'utilisateur connecté correspond bien
+        if not request.user.is_authenticated or request.user.id != dashboard_uid:
+            return redirect(reverse("dashboard:login"))
 
-        # Ne pas mettre en cache les pages de checkout/panier/commande
-        if any(p in request.path for p in ["/panier/", "/commande/"]) and request.user.is_authenticated:
+        # Vérifier que c'est bien un staff
+        if not request.user.is_staff:
+            return redirect(reverse("dashboard:login"))
+
+        return None
+
+
+class NoCacheProtectedPagesMiddleware(MiddlewareMixin):
+    """
+    Ajoute des en-têtes HTTP anti-cache pour empêcher le navigateur
+    de conserver en cache les pages protégées.
+
+    Après une déconnexion, le bouton Retour du navigateur ne pourra
+    plus afficher les pages protégées : l'utilisateur sera redirigé
+    vers la page de connexion correspondante.
+    """
+
+    PROTECTED_PREFIXES = (
+        "/dashboard/",
+        "/compte/",
+        "/panier/",
+        "/commande/",
+    )
+
+    def process_response(self, request, response):
+        # Vérifier si l'URL est protégée
+        path = request.path
+        is_protected = any(path.startswith(p) for p in self.PROTECTED_PREFIXES)
+
+        # Également protéger si l'utilisateur est authentifié
+        # (pages qui ne sont pas dans les préfixes mais nécessitent une session)
+        if is_protected or (hasattr(request, "user") and request.user.is_authenticated):
             response["Cache-Control"] = "no-cache, no-store, must-revalidate, private"
             response["Pragma"] = "no-cache"
             response["Expires"] = "0"

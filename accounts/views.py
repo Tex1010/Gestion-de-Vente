@@ -73,7 +73,12 @@ def login_view(request):
 
 
 def logout_view(request):
-    """Déconnexion. Redirige vers la page de connexion client."""
+    """Déconnexion complète (client + dashboard). Redirige vers la page de connexion client."""
+    # Supprimer le flag dashboard s'il existe
+    if "_dashboard_authenticated_user_id" in request.session:
+        del request.session["_dashboard_authenticated_user_id"]
+        request.session.modified = True
+    # Déconnexion totale Django (vide toute la session)
     logout(request)
     messages.info(request, "Vous êtes déconnecté.")
     return redirect("accounts:login")
