@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 from catalog.models import Product
+from core.utils import log_activity
 from orders.models import Order
 
 from .forms import (
@@ -63,6 +64,12 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            log_activity(
+                request.user, "login", "Client",
+                user.pk, user.username,
+                f"Connexion client : {user.username}",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Bon retour {user.username} !")
             next_url = request.GET.get("next", "core:home")
             return redirect(next_url)
@@ -74,6 +81,13 @@ def login_view(request):
 
 def logout_view(request):
     """Déconnexion complète (client + dashboard). Redirige vers la page de connexion client."""
+    if request.user.is_authenticated:
+        log_activity(
+            request.user, "logout", "Client",
+            request.user.pk, request.user.username,
+            f"Déconnexion client : {request.user.username}",
+            request.META.get("REMOTE_ADDR"),
+        )
     # Supprimer le flag dashboard s'il existe
     if "_dashboard_authenticated_user_id" in request.session:
         del request.session["_dashboard_authenticated_user_id"]

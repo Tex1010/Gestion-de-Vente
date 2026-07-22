@@ -2,6 +2,16 @@
 <div class="col">
     <div class="card product-card h-100 border-0 shadow-sm">
         <div class="product-media">
+            {% if user.is_authenticated %}
+            <form method="post" action="{% url 'accounts:wishlist' %}" class="wishlist-form position-absolute" style="top:10px;right:10px;z-index:5;">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn btn-sm p-1 rounded-circle wishlist-btn" style="width:36px;height:36px;{% if product.id in wishlist_ids %}background:#dc3545;color:#fff;border-color:#dc3545;{% else %}background:#fff;color:#6c757d;border-color:#dee2e6;{% endif %}" title="{% if product.id in wishlist_ids %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}">
+                    <i class="bi bi-heart{% if product.id not in wishlist_ids %}-{% endif %}fill"></i>
+                </button>
+            </form>
+            {% endif %}
             {% if product.image %}
                 <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" loading="lazy">
             {% else %}

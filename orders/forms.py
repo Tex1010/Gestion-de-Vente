@@ -5,7 +5,7 @@ from core.models import PaymentMethod
 
 class CheckoutForm(forms.Form):
     full_name = forms.CharField(label="Nom complet", max_length=150)
-    phone = forms.CharField(label="Telephone", max_length=40)
+    phone = forms.CharField(label="Téléphone de contact", max_length=40)
     email = forms.EmailField(label="Email", required=False)
     city = forms.CharField(label="Ville", max_length=120)
     address = forms.CharField(label="Adresse", max_length=255)
@@ -21,9 +21,16 @@ class CheckoutForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-select"}),
     )
     payment_phone = forms.CharField(
-        label="Numéro de paiement",
+        label="Numéro marchand (destinataire)",
         required=False,
         widget=forms.TextInput(attrs={"class": "form-control", "readonly": "readonly"}),
+    )
+    client_payment_phone = forms.CharField(
+        label="Votre numéro de téléphone utilisé pour le paiement",
+        required=True,
+        max_length=40,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "+261 34 00 000 00"}),
+        help_text="Entrez le numéro de téléphone avec lequel vous avez effectué le paiement",
     )
     payment_reference = forms.CharField(
         label="Référence de paiement",

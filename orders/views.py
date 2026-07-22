@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from catalog.models import Product, ProductVariant
 
 from core.models import PaymentMethod
+from core.utils import log_activity
 
 from .cart import Cart
 from .forms import CheckoutForm
@@ -158,20 +159,19 @@ def checkout(request):
     if request.method == "POST":
         form = CheckoutForm(request.POST)
         if form.is_valid():
-            # Get the phone number from the selected PaymentMethod server-side
+            # Get the merchant payment phone number from the selected PaymentMethod server-side
             payment_method_key = form.cleaned_data["payment_method"]
-            payment_method_obj = None
-            payment_phone = form.cleaned_data.get("payment_phone", "")
+            payment_phone = ""
             
-            # If payment_phone is empty, try to get it from the database
-            if not payment_phone:
-                try:
-                    payment_method_obj = PaymentMethod.objects.get(
-                        method=payment_method_key, is_active=True
-                    )
-                    payment_phone = payment_method_obj.phone_number
-                except PaymentMethod.DoesNotExist:
-                    pass
+            try:
+                payment_method_obj = PaymentMethod.objects.get(
+                    method=payment_method_key, is_active=True
+                )
+                payment_phone = payment_method_obj.phone_number
+            except PaymentMethod.DoesNotExist:
+                pass
+
+            client_payment_phone = form.cleaned_data.get("client_payment_phone", "")
 
             with transaction.atomic():
                 order = Order.objects.create(
@@ -186,6 +186,14 @@ def checkout(request):
                     payment_phone=payment_phone,
                     payment_reference=form.cleaned_data["payment_reference"],
                 )
+                # Store client payment phone in notes if not already there
+                if client_payment_phone and client_payment_phone not in order.notes:
+                    if order.notes:
+                        order.notes = order.notes + f"\n\nNuméro d'envoi du paiement : {client_payment_phone}"
+                    else:
+                        order.notes = f"Numéro d'envoi du paiement : {client_payment_phone}"
+                    order.save(update_fields=["notes"])
+                
                 for item in cart_items:
                     product = Product.objects.select_for_update().get(pk=item["product_id"])
                     variant = None
@@ -212,6 +220,13 @@ def checkout(request):
                     product.save(update_fields=["stock"])
                 order.recalculate_total()
                 cart.clear()
+            
+            log_activity(
+                request.user, "create", "Commande", order.pk, f"Commande #{order.pk}",
+                f"Nouvelle commande #{order.pk} - {form.cleaned_data['full_name']} - Total: {order.total_amount} Ar - Paiement: {payment_method_key}",
+                request.META.get("REMOTE_ADDR"),
+            )
+            
             messages.success(request, "Votre commande a ete enregistree avec succes.")
             return redirect("orders:order_success", order_id=order.pk)
     else:

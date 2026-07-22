@@ -11,10 +11,12 @@ from django.db.models import Count, Q, Sum
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.views.decorators.http import require_POST
 
 from accounts.models import PasswordResetRequest
 from catalog.models import Banner, Category, Product
 from core.models import ActivityLog, Coupon, PaymentMethod, ShippingZone, SiteConfiguration, TaxRate
+from core.utils import log_activity
 from orders.models import Order
 
 from .forms import (
@@ -53,6 +55,13 @@ class DashboardLoginView(LoginView):
     def form_valid(self, form):
         """Connecte l'utilisateur ET marque la session pour le dashboard."""
         response = super().form_valid(form)
+        # Logger la connexion dashboard
+        log_activity(
+            self.request.user, "login", "Dashboard",
+            None, self.request.user.username,
+            f"Connexion au tableau de bord",
+            self.request.META.get("REMOTE_ADDR"),
+        )
         # Marquer la session comme authentifiée pour le dashboard
         self.request.session["_dashboard_authenticated_user_id"] = self.request.user.id
         self.request.session.save()
@@ -86,7 +95,13 @@ def dashboard_logout_view(request):
     - L'utilisateur reste connecté sur le site client s'il l'était
     - La session client (panier, etc.) est préservée
     """
-    from django.contrib import messages
+    if request.user.is_authenticated:
+        log_activity(
+            request.user, "logout", "Dashboard",
+            None, request.user.username,
+            "Déconnexion du tableau de bord",
+            request.META.get("REMOTE_ADDR"),
+        )
 
     # Supprimer l'indicateur dashboard de la session
     if "_dashboard_authenticated_user_id" in request.session:
@@ -208,6 +223,11 @@ def product_create(request):
         form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
             product = form.save()
+            log_activity(
+                request.user, "create", "Produit", product.pk, product.name,
+                f"Création du produit « {product.name} » (prix: {product.price} Ar, stock: {product.stock})",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Produit « {product.name} » créé avec succès.")
             return redirect("dashboard:product_list")
     else:
@@ -219,11 +239,17 @@ def product_create(request):
 @staff_required
 def product_edit(request, pk):
     product = get_object_or_404(Product, pk=pk)
+    old_name = product.name
 
     if request.method == "POST":
         form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
             form.save()
+            log_activity(
+                request.user, "update", "Produit", product.pk, product.name,
+                f"Modification du produit « {product.name} »",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Produit « {product.name} » modifié.")
             return redirect("dashboard:product_list")
     else:
@@ -237,7 +263,13 @@ def product_delete(request, pk):
     product = get_object_or_404(Product, pk=pk)
     if request.method == "POST":
         name = product.name
+        pk_val = product.pk
         product.delete()
+        log_activity(
+            request.user, "delete", "Produit", pk_val, name,
+            f"Suppression du produit « {name} »",
+            request.META.get("REMOTE_ADDR"),
+        )
         messages.success(request, f"Produit « {name} » supprimé.")
         return redirect("dashboard:product_list")
     return render(request, "dashboard/confirm_delete.html", {
@@ -279,6 +311,11 @@ def category_create(request):
         form = CategoryForm(request.POST, request.FILES)
         if form.is_valid():
             category = form.save()
+            log_activity(
+                request.user, "create", "Catégorie", category.pk, category.name,
+                f"Création de la catégorie « {category.name} »",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Catégorie « {category.name} » créée.")
             return redirect("dashboard:category_list")
     else:
@@ -295,6 +332,11 @@ def category_edit(request, pk):
         form = CategoryForm(request.POST, request.FILES, instance=category)
         if form.is_valid():
             form.save()
+            log_activity(
+                request.user, "update", "Catégorie", category.pk, category.name,
+                f"Modification de la catégorie « {category.name} »",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Catégorie « {category.name} » modifiée.")
             return redirect("dashboard:category_list")
     else:
@@ -308,7 +350,13 @@ def category_delete(request, pk):
     category = get_object_or_404(Category, pk=pk)
     if request.method == "POST":
         name = category.name
+        pk_val = category.pk
         category.delete()
+        log_activity(
+            request.user, "delete", "Catégorie", pk_val, name,
+            f"Suppression de la catégorie « {name} »",
+            request.META.get("REMOTE_ADDR"),
+        )
         messages.success(request, f"Catégorie « {name} » supprimée.")
         return redirect("dashboard:category_list")
     return render(request, "dashboard/confirm_delete.html", {
@@ -359,8 +407,14 @@ def order_detail(request, pk):
         new_status = request.POST.get("status")
         if new_status in dict(Order.STATUS_CHOICES):
             if order.can_transition_to(new_status):
+                old_status = order.get_status_display()
                 order.status = new_status
                 order.save(update_fields=["status", "updated_at"])
+                log_activity(
+                    request.user, "order_status", "Commande", order.pk, f"Commande #{order.id}",
+                    f"Changement de statut : {old_status} → {order.get_status_display()} (client: {order.full_name})",
+                    request.META.get("REMOTE_ADDR"),
+                )
                 messages.success(
                     request,
                     f"Commande # {order.id} : statut mis à jour → {order.get_status_display()}.",
@@ -405,6 +459,11 @@ def banner_create(request):
         form = BannerForm(request.POST, request.FILES)
         if form.is_valid():
             banner = form.save()
+            log_activity(
+                request.user, "create", "Bannière", banner.pk, banner.title or "Sans titre",
+                f"Création de la bannière « {banner.title or 'Sans titre'} »",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Bannière « {banner.title or 'Sans titre'} » créée.")
             return redirect("dashboard:banner_list")
     else:
@@ -420,6 +479,11 @@ def banner_edit(request, pk):
         form = BannerForm(request.POST, request.FILES, instance=banner)
         if form.is_valid():
             form.save()
+            log_activity(
+                request.user, "update", "Bannière", banner.pk, banner.title or "Sans titre",
+                f"Modification de la bannière « {banner.title or 'Sans titre'} »",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Bannière « {banner.title or 'Sans titre'} » modifiée.")
             return redirect("dashboard:banner_list")
     else:
@@ -433,7 +497,13 @@ def banner_delete(request, pk):
     banner = get_object_or_404(Banner, pk=pk)
     if request.method == "POST":
         title = banner.title or "Sans titre"
+        pk_val = banner.pk
         banner.delete()
+        log_activity(
+            request.user, "delete", "Bannière", pk_val, title,
+            f"Suppression de la bannière « {title} »",
+            request.META.get("REMOTE_ADDR"),
+        )
         messages.success(request, f"Bannière « {title} » supprimée.")
         return redirect("dashboard:banner_list")
     return render(request, "dashboard/confirm_delete.html", {
@@ -452,6 +522,12 @@ def site_settings(request):
         form = SiteConfigurationForm(request.POST, request.FILES, instance=config)
         if form.is_valid():
             form.save()
+            log_activity(
+                request.user, "update", "Configuration du site",
+                config.pk, config.site_name,
+                "Modification des paramètres du site",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, "Configuration du site mise à jour.")
             return redirect("dashboard:site_settings")
     else:
@@ -500,6 +576,11 @@ def user_create(request):
         form = UserDashboardForm(request.POST)
         if form.is_valid():
             user = form.save()
+            log_activity(
+                request.user, "create", "Utilisateur", user.pk, user.username,
+                f"Création de l'utilisateur « {user.username} » (rôle: {'Admin' if user.is_superuser else 'Client'})",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Utilisateur « {user.username} » créé avec succès.")
             return redirect("dashboard:user_list")
     else:
@@ -515,6 +596,11 @@ def user_edit(request, pk):
         form = UserDashboardForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
+            log_activity(
+                request.user, "update", "Utilisateur", user.pk, user.username,
+                f"Modification de l'utilisateur « {user.username} »",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Utilisateur « {user.username} » modifié.")
             return redirect("dashboard:user_list")
     else:
@@ -528,7 +614,13 @@ def user_delete(request, pk):
     user = get_object_or_404(User, pk=pk)
     if request.method == "POST":
         username = user.username
+        pk_val = user.pk
         user.delete()
+        log_activity(
+            request.user, "delete", "Utilisateur", pk_val, username,
+            f"Suppression de l'utilisateur « {username} »",
+            request.META.get("REMOTE_ADDR"),
+        )
         messages.success(request, f"Utilisateur « {username} » supprimé.")
         return redirect("dashboard:user_list")
     return render(request, "dashboard/confirm_delete.html", {
@@ -561,6 +653,11 @@ def coupon_create(request):
         form = CouponForm(request.POST)
         if form.is_valid():
             coupon = form.save()
+            log_activity(
+                request.user, "create", "Coupon", coupon.pk, coupon.code,
+                f"Création du coupon « {coupon.code} » (réduction: {coupon.discount_value}{'%' if coupon.discount_type == 'percentage' else ' Ar'})",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Coupon « {coupon.code} » créé.")
             return redirect("dashboard:coupon_list")
     else:
@@ -576,6 +673,11 @@ def coupon_edit(request, pk):
         form = CouponForm(request.POST, instance=coupon)
         if form.is_valid():
             form.save()
+            log_activity(
+                request.user, "update", "Coupon", coupon.pk, coupon.code,
+                f"Modification du coupon « {coupon.code} »",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Coupon « {coupon.code} » modifié.")
             return redirect("dashboard:coupon_list")
     else:
@@ -589,7 +691,13 @@ def coupon_delete(request, pk):
     coupon = get_object_or_404(Coupon, pk=pk)
     if request.method == "POST":
         code = coupon.code
+        pk_val = coupon.pk
         coupon.delete()
+        log_activity(
+            request.user, "delete", "Coupon", pk_val, code,
+            f"Suppression du coupon « {code} »",
+            request.META.get("REMOTE_ADDR"),
+        )
         messages.success(request, f"Coupon « {code} » supprimé.")
         return redirect("dashboard:coupon_list")
     return render(request, "dashboard/confirm_delete.html", {
@@ -619,6 +727,11 @@ def shipping_create(request):
         form = ShippingZoneForm(request.POST)
         if form.is_valid():
             zone = form.save()
+            log_activity(
+                request.user, "create", "Zone de livraison", zone.pk, zone.name,
+                f"Création de la zone de livraison « {zone.name} »",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Zone de livraison « {zone.name} » créée.")
             return redirect("dashboard:shipping_list")
     else:
@@ -634,6 +747,11 @@ def shipping_edit(request, pk):
         form = ShippingZoneForm(request.POST, instance=zone)
         if form.is_valid():
             form.save()
+            log_activity(
+                request.user, "update", "Zone de livraison", zone.pk, zone.name,
+                f"Modification de la zone de livraison « {zone.name} »",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Zone de livraison « {zone.name} » modifiée.")
             return redirect("dashboard:shipping_list")
     else:
@@ -647,7 +765,13 @@ def shipping_delete(request, pk):
     zone = get_object_or_404(ShippingZone, pk=pk)
     if request.method == "POST":
         name = zone.name
+        pk_val = zone.pk
         zone.delete()
+        log_activity(
+            request.user, "delete", "Zone de livraison", pk_val, name,
+            f"Suppression de la zone de livraison « {name} »",
+            request.META.get("REMOTE_ADDR"),
+        )
         messages.success(request, f"Zone de livraison « {name} » supprimée.")
         return redirect("dashboard:shipping_list")
     return render(request, "dashboard/confirm_delete.html", {
@@ -677,6 +801,11 @@ def tax_create(request):
         form = TaxRateForm(request.POST)
         if form.is_valid():
             tax = form.save()
+            log_activity(
+                request.user, "create", "Taxe", tax.pk, tax.name,
+                f"Création de la taxe « {tax.name} » ({tax.rate}%)",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Taxe « {tax.name} » créée.")
             return redirect("dashboard:tax_list")
     else:
@@ -692,6 +821,11 @@ def tax_edit(request, pk):
         form = TaxRateForm(request.POST, instance=tax)
         if form.is_valid():
             form.save()
+            log_activity(
+                request.user, "update", "Taxe", tax.pk, tax.name,
+                f"Modification de la taxe « {tax.name} »",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Taxe « {tax.name} » modifiée.")
             return redirect("dashboard:tax_list")
     else:
@@ -705,7 +839,13 @@ def tax_delete(request, pk):
     tax = get_object_or_404(TaxRate, pk=pk)
     if request.method == "POST":
         name = tax.name
+        pk_val = tax.pk
         tax.delete()
+        log_activity(
+            request.user, "delete", "Taxe", pk_val, name,
+            f"Suppression de la taxe « {name} »",
+            request.META.get("REMOTE_ADDR"),
+        )
         messages.success(request, f"Taxe « {name} » supprimée.")
         return redirect("dashboard:tax_list")
     return render(request, "dashboard/confirm_delete.html", {
@@ -720,13 +860,94 @@ def tax_delete(request, pk):
 def activity_log(request):
     logs = ActivityLog.objects.select_related("user").order_by("-created_at")
     action_filter = request.GET.get("action", "").strip()
+    search_query = request.GET.get("q", "").strip()
+    export_excel = request.GET.get("export_excel", "").strip()
+    
     if action_filter in dict(ActivityLog.ACTION_CHOICES):
         logs = logs.filter(action=action_filter)
+    if search_query:
+        logs = logs.filter(
+            Q(user__username__icontains=search_query)
+            | Q(object_repr__icontains=search_query)
+            | Q(details__icontains=search_query)
+            | Q(model_name__icontains=search_query)
+        )
+    
+    # Export Excel
+    if export_excel == "1":
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Journal d'activité"
+        
+        # En-têtes
+        headers = ["Date", "Utilisateur", "Action", "Modèle", "Objet", "Détails", "Adresse IP"]
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="0D6EFD", end_color="0D6EFD", fill_type="solid")
+        
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal="center")
+        
+        # Données
+        for row, log in enumerate(logs, 2):
+            ws.cell(row=row, column=1, value=log.created_at.strftime("%d/%m/%Y %H:%M"))
+            ws.cell(row=row, column=2, value=log.user.username if log.user else "Système")
+            ws.cell(row=row, column=3, value=log.get_action_display())
+            ws.cell(row=row, column=4, value=log.model_name or "")
+            ws.cell(row=row, column=5, value=log.object_repr or "")
+            ws.cell(row=row, column=6, value=log.details or "")
+            ws.cell(row=row, column=7, value=log.ip_address or "")
+        
+        # Ajuster la largeur des colonnes
+        for col in range(1, 8):
+            ws.column_dimensions[chr(64 + col)].width = 25
+        
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = 'attachment; filename="journal_activite.xlsx"'
+        wb.save(response)
+        return response
+    
+    # Pagination
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    paginator = Paginator(logs, 50)
+    page = request.GET.get("page", 1)
+    try:
+        logs_page = paginator.page(page)
+    except PageNotAnInteger:
+        logs_page = paginator.page(1)
+    except EmptyPage:
+        logs_page = paginator.page(paginator.num_pages)
+    
     context = {
-        "logs": logs,
+        "logs": logs_page,
         "action_choices": ActivityLog.ACTION_CHOICES,
+        "paginator": paginator,
     }
     return render(request, "dashboard/activity_log.html", context)
+
+
+@staff_required
+def activity_log_detail(request, pk):
+    """Affiche les détails complets d'une entrée du journal."""
+    log_entry = get_object_or_404(ActivityLog, pk=pk)
+    return render(request, "dashboard/activity_log_detail.html", {"log": log_entry})
+
+
+@require_POST
+@staff_required
+def activity_log_delete(request, pk):
+    """Supprime une entrée du journal d'activité."""
+    log_entry = get_object_or_404(ActivityLog, pk=pk)
+    log_entry.delete()
+    messages.success(request, "Entrée du journal supprimée.")
+    return redirect("dashboard:activity_log")
 
 
 # ===== PAYMENT METHODS =====
@@ -750,6 +971,11 @@ def payment_create(request):
         form = PaymentMethodForm(request.POST)
         if form.is_valid():
             pm = form.save()
+            log_activity(
+                request.user, "create", "Mode de paiement", pm.pk, pm.get_method_display(),
+                f"Création du mode de paiement « {pm.get_method_display()} » ({pm.phone_number})",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Mode de paiement « {pm.get_method_display()} » créé.")
             return redirect("dashboard:payment_list")
     else:
@@ -765,6 +991,11 @@ def payment_edit(request, pk):
         form = PaymentMethodForm(request.POST, instance=pm)
         if form.is_valid():
             form.save()
+            log_activity(
+                request.user, "update", "Mode de paiement", pm.pk, pm.get_method_display(),
+                f"Modification du mode de paiement « {pm.get_method_display()} »",
+                request.META.get("REMOTE_ADDR"),
+            )
             messages.success(request, f"Mode de paiement « {pm.get_method_display()} » modifié.")
             return redirect("dashboard:payment_list")
     else:
@@ -778,7 +1009,13 @@ def payment_delete(request, pk):
     pm = get_object_or_404(PaymentMethod, pk=pk)
     if request.method == "POST":
         method_name = pm.get_method_display()
+        pk_val = pm.pk
         pm.delete()
+        log_activity(
+            request.user, "delete", "Mode de paiement", pk_val, method_name,
+            f"Suppression du mode de paiement « {method_name} »",
+            request.META.get("REMOTE_ADDR"),
+        )
         messages.success(request, f"Mode de paiement « {method_name} » supprimé.")
         return redirect("dashboard:payment_list")
     return render(request, "dashboard/confirm_delete.html", {
@@ -849,6 +1086,12 @@ def password_reset_send(request, pk):
         reset_req.resolved_by = request.user
         reset_req.new_password = new_password
         reset_req.save()
+        log_activity(
+            request.user, "update", "Réinitialisation mot de passe",
+            reset_req.pk, reset_req.email,
+            f"Réinitialisation du mot de passe pour {reset_req.email}",
+            request.META.get("REMOTE_ADDR"),
+        )
         messages.success(
             request,
             f"Nouveau mot de passe envoyé à {reset_req.email}. "
@@ -877,6 +1120,13 @@ def database_backup(request):
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"backup_{timestamp}.sqlite3"
+
+    log_activity(
+        request.user, "other", "Sauvegarde",
+        None, "Base de données",
+        f"Téléchargement de la sauvegarde de la base de données",
+        request.META.get("REMOTE_ADDR"),
+    )
 
     response = FileResponse(
         open(db_file, "rb"),

@@ -1,0 +1,75 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Détail du journal | {{ site_config.site_name }}{% endblock %}
+{% block page_title %}Détail de l'entrée du journal{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'dashboard:activity_log' %}" class="btn-db-outline">
+        <i class="bi bi-arrow-left"></i> Retour au journal
+    </a>
+</div>
+
+<div class="card-panel">
+    <div class="card-panel-header">
+        <h5><i class="bi bi-info-circle me-2"></i>Détails de l'activité</h5>
+    </div>
+    <div class="card-panel-body">
+        <div class="order-meta-grid">
+            <div class="order-meta-item">
+                <strong>Date et heure</strong>
+                <span>{{ log.created_at|date:"d/m/Y H:i:s" }}</span>
+            </div>
+            <div class="order-meta-item">
+                <strong>Utilisateur</strong>
+                <span>{{ log.user.username|default:"Système" }}</span>
+            </div>
+            <div class="order-meta-item">
+                <strong>Action</strong>
+                <span>
+                    <span class="badge {% if log.action == 'create' %}bg-success{% elif log.action == 'update' %}bg-primary{% elif log.action == 'delete' %}bg-danger{% elif log.action == 'login' %}bg-info{% elif log.action == 'order_status' %}bg-purple{% else %}bg-secondary{% endif %}">
+                        {{ log.get_action_display }}
+                    </span>
+                </span>
+            </div>
+            <div class="order-meta-item">
+                <strong>Modèle concerné</strong>
+                <span>{{ log.model_name|default:"-" }}</span>
+            </div>
+            <div class="order-meta-item">
+                <strong>ID Objet</strong>
+                <span>{{ log.object_id|default:"-" }}</span>
+            </div>
+            <div class="order-meta-item">
+                <strong>Représentation</strong>
+                <span>{{ log.object_repr|default:"-" }}</span>
+            </div>
+            {% if log.ip_address %}
+            <div class="order-meta-item">
+                <strong>Adresse IP</strong>
+                <span>{{ log.ip_address }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if log.details %}
+        <div class="mt-4">
+            <strong class="d-block mb-2">Détails complets :</strong>
+            <div class="p-3 bg-light rounded-3">
+                <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ log.details }}</pre>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-3">
+    <form method="post" action="{% url 'dashboard:activity_log_delete' log.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Supprimer cette entrée du journal ?')">
+            <i class="bi bi-trash me-2"></i>Supprimer cette entrée
+        </button>
+    </form>
+</div>
+{% endblock %}

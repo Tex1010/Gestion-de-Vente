@@ -7,15 +7,29 @@
 {% block content %}
 <div class="card-panel mb-4">
     <div class="card-panel-header">
-        <form method="get">
-            <select name="action" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+        <form method="get" class="d-flex gap-2 flex-wrap align-items-center">
+            <input type="text" name="q" class="form-control form-control-sm" style="width:200px;" placeholder="Rechercher..." value="{{ request.GET.q|default:'' }}">
+            <select name="action" class="form-select form-select-sm" style="width:auto;">
                 <option value="">Toutes les actions</option>
                 {% for key, label in action_choices %}
                 <option value="{{ key }}" {% if request.GET.action == key %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
+            <button type="submit" class="btn btn-sm btn-db-primary">
+                <i class="bi bi-search me-1"></i>Filtrer
+            </button>
+            {% if request.GET.q or request.GET.action %}
+            <a href="{% url 'dashboard:activity_log' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-x-lg"></i> Rénitialiser
+            </a>
+            {% endif %}
         </form>
-        <span class="text-soft small">{{ logs.count }} entrée{{ logs.count|pluralize }}</span>
+        <div class="d-flex gap-2 align-items-center">
+            <a href="{% url 'dashboard:activity_log' %}?export_excel=1{% if request.GET.action %}&action={{ request.GET.action }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="btn btn-sm btn-success">
+                <i class="bi bi-file-earmark-excel me-1"></i>Exporter Excel
+            </a>
+            <span class="text-soft small">{{ logs.count }} entrée{{ logs.count|pluralize }}</span>
+        </div>
     </div>
 </div>
 
@@ -29,8 +43,8 @@
                     <th>Action</th>
                     <th>Modèle</th>
                     <th>Objet</th>
-                    <th>Détails</th>
-                    <th>IP</th>
+                    <th>Action</th>
+                    <th>Supprimer</th>
                 </tr>
             </thead>
             <tbody>
@@ -39,14 +53,25 @@
                     <td data-label="Date" class="text-soft">{{ log.created_at|date:"d/m/Y H:i" }}</td>
                     <td data-label="Utilisateur">{{ log.user.username|default:"Système" }}</td>
                     <td data-label="Action">
-                        <span class="badge {% if log.action == 'create' %}bg-success{% elif log.action == 'update' %}bg-primary{% elif log.action == 'delete' %}bg-danger{% elif log.action == 'login' %}bg-info{% elif log.action == 'order_status' %}bg-purple{% else %}bg-secondary{% endif %}">
+                        <span class="badge {% if log.action == 'create' %}bg-success{% elif log.action == 'update' %}bg-primary{% elif log.action == 'delete' %}bg-danger{% elif log.action == 'login' %}bg-info{% elif log.action == 'logout' %}bg-secondary{% elif log.action == 'order_status' %}bg-purple{% else %}bg-secondary{% endif %}">
                             {{ log.get_action_display }}
                         </span>
                     </td>
                     <td data-label="Modèle">{{ log.model_name|default:"-" }}</td>
                     <td data-label="Objet">{{ log.object_repr|truncatewords:6|default:"-" }}</td>
-                    <td data-label="Détails" class="text-soft small">{{ log.details|truncatewords:10|default:"-" }}</td>
-                    <td data-label="IP" class="text-soft small">{{ log.ip_address|default:"-" }}</td>
+                    <td data-label="Action">
+                        <a href="{% url 'dashboard:activity_log_detail' log.pk %}" class="btn btn-sm btn-outline-primary" title="Voir les détails">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                    <td data-label="Supprimer">
+                        <form method="post" action="{% url 'dashboard:activity_log_delete' log.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette entrée du journal ?')" title="Supprimer">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="7"><div class="empty-state"><i class="bi bi-clock-history"></i><h6>Aucune activité</h6></div></td></tr>
@@ -55,4 +80,20 @@
         </table>
     </div>
 </div>
+
+{% if logs.paginator.num_pages > 1 %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if logs.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page=1{% if request.GET.action %}&action={{ request.GET.action }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">&laquo;</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ logs.previous_page_number }}{% if request.GET.action %}&action={{ request.GET.action }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Précédent</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ logs.number }} / {{ logs.paginator.num_pages }}</span></li>
+        {% if logs.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ logs.next_page_number }}{% if request.GET.action %}&action={{ request.GET.action }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Suivant</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ logs.paginator.num_pages }}{% if request.GET.action %}&action={{ request.GET.action }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">&raquo;</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
 {% endblock %}

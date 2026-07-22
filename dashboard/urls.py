@@ -2,6 +2,8 @@ from django.urls import path
 
 from .views import (
     activity_log,
+    activity_log_delete,
+    activity_log_detail,
     banner_create,
     banner_delete,
     banner_edit,
@@ -93,6 +95,8 @@ urlpatterns = [
     path("taxes/<int:pk>/supprimer/", tax_delete, name="tax_delete"),
     # Activity Log
     path("journal/", activity_log, name="activity_log"),
+    path("journal/<int:pk>/", activity_log_detail, name="activity_log_detail"),
+    path("journal/<int:pk>/supprimer/", activity_log_delete, name="activity_log_delete"),
     # Backup
     path("sauvegarde/", database_backup, name="database_backup"),
     # Payment methods
