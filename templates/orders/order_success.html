@@ -12,7 +12,22 @@
             <span class="eyebrow">Commande enregistree</span>
             <h1 class="display-6 fw-bold mt-2">Merci {{ order.full_name }}</h1>
             <p class="lead text-muted">Votre commande numero {{ order.id }} a bien ete recue. Le statut actuel est : <strong>{{ order.get_status_display }}</strong>.</p>
-            <p class="mb-4">Montant total : <strong>{{ order.total_amount|floatformat:0 }} Ar</strong></p>
+            <div class="d-flex justify-content-center gap-4 mb-4 flex-wrap">
+                <div class="text-center px-3">
+                    <small class="text-muted d-block">Sous-total produits</small>
+                    <strong class="fs-5">{{ order.subtotal|floatformat:0 }} Ar</strong>
+                </div>
+                {% if order.shipping_cost > 0 %}
+                <div class="text-center px-3 border-start">
+                    <small class="text-muted d-block">Frais de livraison</small>
+                    <strong class="fs-5 text-success">+ {{ order.shipping_cost|floatformat:0 }} Ar</strong>
+                </div>
+                {% endif %}
+                <div class="text-center px-3 border-start">
+                    <small class="text-muted d-block">Total payé</small>
+                    <strong class="fs-4 text-primary">{{ order.total_amount|floatformat:0 }} Ar</strong>
+                </div>
+            </div>
             
             {% if order.delivery_method == 'ship' %}
             <div class="alert alert-secondary mt-4">

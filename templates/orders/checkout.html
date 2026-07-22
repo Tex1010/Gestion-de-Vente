@@ -19,7 +19,7 @@
             <div class="col-lg-7">
                 <div class="content-panel p-4">
                     <h2 class="h4 mb-4">Informations client</h2>
-                    <form method="post" class="row g-3" id="checkoutForm">
+                    <form method="post" class="row g-3" id="checkoutForm" novalidate>
                         {% csrf_token %}
 
                         {# Champs standard (sauf notes, delivery, shipping, payment) #}
@@ -58,7 +58,7 @@
                             <div class="row g-3" id="delivery_method_cards">
                                 {% for radio in form.delivery_method %}
                                 <div class="col-md-6">
-                                    <label class="delivery-card" for="{{ radio.id_for_label }}">
+                                    <label class="delivery-card {% if radio.data.value == 'pickup' %}active{% endif %}" for="{{ radio.id_for_label }}">
                                         {{ radio.tag }}
                                         <div class="delivery-card-body">
                                             <div class="delivery-card-icon">
@@ -78,6 +78,13 @@
                                                     {% endif %}
                                                 </small>
                                             </div>
+                                            <div class="delivery-card-badge">
+                                                {% if radio.data.value == 'pickup' %}
+                                                    <span class="badge bg-success">Gratuit</span>
+                                                {% else %}
+                                                    <span class="badge bg-primary" id="shipBadge">Frais selon zone</span>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                     </label>
                                 </div>
@@ -94,7 +101,13 @@
                                 <label class="form-label fw-semibold" for="{{ form.shipping_zone.id_for_label }}">
                                     <i class="bi bi-geo-alt me-1"></i>{{ form.shipping_zone.label }}
                                 </label>
-                                {{ form.shipping_zone }}
+                                <div class="shipping-select-wrapper">
+                                    {{ form.shipping_zone }}
+                                    <div class="shipping-fee-preview d-none" id="shippingFeePreview">
+                                        <i class="bi bi-truck"></i>
+                                        <span id="shippingFeeText"></span>
+                                    </div>
+                                </div>
                                 {% if form.shipping_zone.errors %}
                                     <div class="text-danger small mt-1">{{ form.shipping_zone.errors|striptags }}</div>
                                 {% endif %}
@@ -196,7 +209,7 @@
                         </div>
 
                         <div class="col-12 d-grid d-md-flex gap-3 pt-2">
-                            <button class="btn btn-primary btn-lg px-4 rounded-pill">
+                            <button type="submit" class="btn btn-primary btn-lg px-4 rounded-pill" id="submitBtn">
                                 <i class="bi bi-check2-circle me-2"></i>Confirmer la commande
                             </button>
                             <a href="{% url 'orders:cart_detail' %}" class="btn btn-outline-dark btn-lg px-4 rounded-pill">Modifier le panier</a>
@@ -229,13 +242,42 @@
                             <strong id="subtotalDisplay">{{ cart_total|floatformat:0 }} Ar</strong>
                         </div>
                         <div class="d-flex justify-content-between mb-2 d-none" id="shippingCostRow">
-                            <span>Frais de livraison</span>
-                            <strong id="shippingCostDisplay">0 Ar</strong>
+                            <span>
+                                <i class="bi bi-truck me-1 text-success"></i>Frais de livraison
+                            </span>
+                            <strong id="shippingCostDisplay">+0 Ar</strong>
+                        </div>
+                        <div class="d-none" id="deliveryMethodDisplay">
+                            <div class="d-flex justify-content-between mb-2 text-muted small">
+                                <span id="deliveryMethodText">Retrait sur place</span>
+                                <span id="deliveryMethodCost">Gratuit</span>
+                            </div>
                         </div>
                         <hr class="my-2">
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="fs-5">Total à payer</span>
+                            <span class="fs-5 fw-semibold">Total à payer</span>
                             <strong class="fs-3 text-primary" id="totalDisplay">{{ cart_total|floatformat:0 }} Ar</strong>
+                        </div>
+                    </div>
+
+                    <!-- Delivery info summary in sidebar -->
+                    <div class="mt-4 p-3 bg-light rounded-3" id="deliverySummaryBox">
+                        <h6 class="mb-2 fw-semibold">
+                            <i class="bi bi-box-seam me-1"></i>Récapitulatif réception
+                        </h6>
+                        <div id="deliverySummaryContent">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span class="text-muted">Mode</span>
+                                <span id="summaryDeliveryMode" class="fw-medium">Retrait sur place</span>
+                            </div>
+                            <div class="d-flex justify-content-between small d-none" id="summaryZoneRow">
+                                <span class="text-muted">Zone</span>
+                                <span id="summaryDeliveryZone" class="fw-medium">—</span>
+                            </div>
+                            <div class="d-flex justify-content-between small d-none" id="summaryCostRow">
+                                <span class="text-muted">Frais</span>
+                                <span id="summaryDeliveryCost" class="fw-medium">0 Ar</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -247,21 +289,29 @@
 
 {% block extra_css %}
 <style>
-/* Delivery Method Cards */
+/* ===== VARIABLES ===== */
+:root {
+    --card-border-radius: 12px;
+    --card-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== DELIVERY METHOD CARDS ===== */
 #delivery_method_cards .delivery-card {
     display: block;
     cursor: pointer;
     border: 2px solid #e0e0e0;
-    border-radius: 12px;
-    padding: 1rem;
-    transition: all 0.2s ease;
+    border-radius: var(--card-border-radius);
+    padding: 1.25rem;
+    transition: var(--card-transition);
     background: #fff;
     height: 100%;
+    position: relative;
+    overflow: hidden;
 }
 #delivery_method_cards .delivery-card:hover {
     border-color: #0d6efd;
-    box-shadow: 0 2px 12px rgba(13,110,253,0.12);
-    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(13,110,253,0.12);
+    transform: translateY(-3px);
 }
 #delivery_method_cards input[type="radio"] {
     display: none;
@@ -269,71 +319,144 @@
 #delivery_method_cards .delivery-card-body {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.85rem;
     position: relative;
 }
 #delivery_method_cards .delivery-card-icon {
-    width: 48px; height: 48px;
+    width: 52px; height: 52px;
     display: flex; align-items: center; justify-content: center;
     background: #f0f0f0; border-radius: 12px; flex-shrink: 0;
+    transition: var(--card-transition);
 }
-#delivery_method_cards input[type="radio"]:checked + .delivery-card-body::before {
-    content: '\F26A'; font-family: 'bootstrap-icons';
-    position: absolute; top: -2px; right: -2px;
-    background: #0d6efd; color: #fff;
-    width: 22px; height: 22px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px;
+#delivery_method_cards input[type="radio"]:checked + .delivery-card-body .delivery-card-icon {
+    background: rgba(13,110,253,0.1);
 }
 #delivery_method_cards .delivery-card:has(input:checked) {
-    border-color: #0d6efd; background: #f0f7ff;
+    border-color: #0d6efd;
+    background: #f0f7ff;
     box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
 }
-
-/* Shipping Zone Panel */
-.shipping-zone-panel {
-    background: #fff; border: 1px solid #e0e0e0;
-    border-radius: 12px;
+#delivery_method_cards .delivery-card:has(input:checked)::before {
+    content: '\F26A';
+    font-family: 'bootstrap-icons';
+    position: absolute;
+    top: -2px; right: -2px;
+    background: #0d6efd; color: #fff;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    z-index: 2;
+}
+#delivery_method_cards .delivery-card:has(input:checked)::after {
+    content: '';
+    position: absolute;
+    top: -8px; right: -8px;
+    width: 40px; height: 40px;
+    background: rgba(13,110,253,0.08);
+    border-radius: 50%;
+}
+.delivery-card-badge {
+    position: absolute;
+    top: 10px; right: 10px;
+}
+.delivery-card-info {
+    flex: 1;
 }
 
-/* Payment Section */
-.payment-section { background: #f8f9fa; padding: 1.5rem; border-radius: 16px; }
+/* ===== SHIPPING ZONE PANEL ===== */
+.shipping-zone-panel {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: var(--card-border-radius);
+    transition: var(--card-transition);
+}
+.shipping-zone-panel:focus-within {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+}
+.shipping-select-wrapper {
+    position: relative;
+}
+.shipping-fee-preview {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+    animation: fadeIn 0.3s ease;
+}
 
+/* ===== PAYMENT SECTION ===== */
+.payment-section {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 16px;
+}
 #payment_method_cards .payment-card {
     display: block; cursor: pointer;
-    border: 2px solid #e0e0e0; border-radius: 12px;
-    padding: 1rem; transition: all 0.2s ease;
+    border: 2px solid #e0e0e0;
+    border-radius: var(--card-border-radius);
+    padding: 1rem;
+    transition: var(--card-transition);
     background: #fff; height: 100%;
 }
 #payment_method_cards .payment-card:hover {
-    border-color: #0d6efd; box-shadow: 0 2px 12px rgba(13,110,253,0.12);
-    transform: translateY(-2px);
+    border-color: #0d6efd;
+    box-shadow: 0 4px 20px rgba(13,110,253,0.12);
+    transform: translateY(-3px);
 }
 #payment_method_cards .payment-card-input { display: none; }
 #payment_method_cards .payment-card:has(input:checked) {
-    border-color: #0d6efd; background: #f0f7ff;
+    border-color: #0d6efd;
+    background: #f0f7ff;
     box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
 }
 #payment_method_cards .payment-card-body {
-    display: flex; align-items: center; gap: 0.75rem; position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    position: relative;
 }
 #payment_method_cards .payment-card-icon {
-    width: 48px; height: 48px;
+    width: 52px; height: 52px;
     display: flex; align-items: center; justify-content: center;
-    background: #f0f0f0; border-radius: 12px; flex-shrink: 0;
+    background: #f0f0f0;
+    border-radius: 12px;
+    flex-shrink: 0;
+    transition: var(--card-transition);
+}
+#payment_method_cards .payment-card:has(input:checked) .payment-card-icon {
+    background: rgba(13,110,253,0.1);
 }
 
-/* Payment Phone Card */
+/* ===== PAYMENT PHONE CARD ===== */
 .payment-phone-card {
-    background: #fff; border: 1px solid #e0e0e0;
-    border-radius: 12px; padding: 1rem 1.25rem;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: var(--card-border-radius);
+    padding: 1rem 1.25rem;
+    animation: slideDown 0.3s ease;
 }
 .payment-phone-number {
-    font-size: 1.25rem; font-weight: 700; color: #0d6efd;
-    letter-spacing: 0.5px; font-family: 'Courier New', monospace;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0d6efd;
+    letter-spacing: 0.5px;
+    font-family: 'Courier New', monospace;
 }
 .payment-phone-name { font-size: 0.85rem; color: #6c757d; margin-top: 2px; }
 
+/* ===== TOAST ===== */
 .copy-toast {
     position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(100px);
@@ -341,8 +464,38 @@
     border-radius: 50px; font-weight: 500;
     box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     opacity: 0; transition: all 0.3s ease; z-index: 9999;
+    display: flex; align-items: center; gap: 8px;
 }
 .copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== SUMMARY BOX ===== */
+#deliverySummaryBox {
+    border-left: 3px solid #0d6efd;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(-50%); }
+}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-green {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+.shipping-cost-updated {
+    animation: pulse-green 0.4s ease;
+    color: #2e7d32 !important;
+}
+
+/* ===== ORDER SUMMARY ===== */
+#orderSummary .fs-3 {
+    transition: color 0.3s ease;
+}
 </style>
 {% endblock %}
 
@@ -358,13 +511,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const subtotalDisplay = document.getElementById('subtotalDisplay');
     const totalDisplay = document.getElementById('totalDisplay');
     const cartTotal = {{ cart_total|default:0 }};
+    const deliveryMethodText = document.getElementById('deliveryMethodText');
+    const deliveryMethodCost = document.getElementById('deliveryMethodCost');
+    const deliveryMethodDisplay = document.getElementById('deliveryMethodDisplay');
+    const shippingFeePreview = document.getElementById('shippingFeePreview');
+    const shippingFeeText = document.getElementById('shippingFeeText');
+    const summaryDeliveryMode = document.getElementById('summaryDeliveryMode');
+    const summaryDeliveryZone = document.getElementById('summaryDeliveryZone');
+    const summaryDeliveryCost = document.getElementById('summaryDeliveryCost');
+    const summaryZoneRow = document.getElementById('summaryZoneRow');
+    const summaryCostRow = document.getElementById('summaryCostRow');
+    const submitBtn = document.getElementById('submitBtn');
+    const checkoutForm = document.getElementById('checkoutForm');
 
-    // Données des zones de livraison (depuis le serveur)
-    const shippingData = {
-        {% for zone in shipping_zones %}
-        '{{ zone.pk }}': { cost: {{ zone.base_cost|floatformat:0 }}, name: '{{ zone.name|escapejs }}' },
-        {% endfor %}
-    };
+    // Données des zones de livraison depuis le serveur (JSON sécurisé)
+    const shippingData = {{ shipping_zones_json|safe }};
 
     // Éléments pour le paiement
     const methodRadios = document.querySelectorAll('input[name="payment_method"]');
@@ -375,8 +536,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const copyBtn = document.getElementById('copyPhoneBtn');
     const copyBtn2 = document.getElementById('copyPhoneBtn2');
     const paymentRadios = document.querySelectorAll('.payment-card-input');
-    const checkoutForm = document.getElementById('checkoutForm');
 
+    // Données de paiement depuis le serveur
     const paymentData = {
         {% for pm in payment_methods %}
         '{{ pm.method }}': {
@@ -387,23 +548,58 @@ document.addEventListener('DOMContentLoaded', function() {
         {% endfor %}
     };
 
+    // ===== FORMATAGE NOMBRE =====
+    function formatPrice(amount) {
+        return Number(amount).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' Ar';
+    }
+
     // ===== FONCTIONS =====
     function updateDeliveryUI() {
         const selected = document.querySelector('input[name="delivery_method"]:checked');
         if (!selected) return;
 
         const method = selected.value;
+        
+        // Mettre à jour le badge et le résumé
         if (method === 'ship') {
+            // Afficher section livraison
             shippingSection.classList.remove('d-none');
+            shippingSection.style.animation = 'slideDown 0.3s ease';
             shippingSelect.required = true;
+            
+            // Mettre à jour le résumé
+            summaryDeliveryMode.textContent = 'Livraison';
+            deliveryMethodText.textContent = 'Livraison';
+            deliveryMethodCost.textContent = 'Selon zone';
+            deliveryMethodDisplay.classList.remove('d-none');
+            
+            // Appliquer le badge actif
+            document.querySelectorAll('.delivery-card').forEach(c => c.classList.remove('active'));
+            selected.closest('.delivery-card')?.classList.add('active');
+            
+            // Mettre à jour les frais si déjà sélectionné
             updateShippingCost();
         } else {
+            // Masquer section livraison
             shippingSection.classList.add('d-none');
             shippingSelect.required = false;
             shippingCostRow.classList.add('d-none');
-            updateTotal(0);
+            shippingFeePreview.classList.add('d-none');
+            summaryZoneRow.classList.add('d-none');
+            summaryCostRow.classList.add('d-none');
+            
+            // Mettre à jour le résumé
+            summaryDeliveryMode.textContent = 'Retrait sur place';
+            deliveryMethodText.textContent = 'Retrait sur place';
+            deliveryMethodCost.textContent = 'Gratuit';
+            
             // Réinitialiser la sélection de zone
             shippingSelect.value = '';
+            updateTotal(0);
+            
+            // Appliquer le badge actif
+            document.querySelectorAll('.delivery-card').forEach(c => c.classList.remove('active'));
+            selected.closest('.delivery-card')?.classList.add('active');
         }
     }
 
@@ -411,20 +607,40 @@ document.addEventListener('DOMContentLoaded', function() {
         const zoneId = shippingSelect.value;
         if (!zoneId || !shippingData[zoneId]) {
             shippingCostRow.classList.add('d-none');
+            shippingFeePreview.classList.add('d-none');
+            summaryZoneRow.classList.add('d-none');
+            summaryCostRow.classList.add('d-none');
             updateTotal(0);
             return;
         }
 
         const cost = parseFloat(shippingData[zoneId].cost) || 0;
-        shippingCostDisplay.textContent = cost.toLocaleString('fr-FR') + ' Ar';
+        const zoneName = shippingData[zoneId].name || '';
+        
+        // Afficher les frais dans la ligne récapitulative
+        shippingCostDisplay.textContent = '+ ' + formatPrice(cost);
+        shippingCostDisplay.classList.remove('shipping-cost-updated');
+        void shippingCostDisplay.offsetWidth; // Force reflow
+        shippingCostDisplay.classList.add('shipping-cost-updated');
         shippingCostRow.classList.remove('d-none');
+        
+        // Afficher le badge de frais dans le select
+        shippingFeeText.textContent = formatPrice(cost);
+        shippingFeePreview.classList.remove('d-none');
+        
+        // Mettre à jour le résumé latéral
+        summaryDeliveryZone.textContent = zoneName;
+        summaryDeliveryCost.textContent = formatPrice(cost);
+        summaryZoneRow.classList.remove('d-none');
+        summaryCostRow.classList.remove('d-none');
+        deliveryMethodCost.textContent = formatPrice(cost);
+        
         updateTotal(cost);
     }
 
     function updateTotal(shippingCost) {
-        const subtotal = cartTotal;
-        const total = subtotal + (shippingCost || 0);
-        totalDisplay.textContent = total.toLocaleString('fr-FR') + ' Ar';
+        const total = cartTotal + (shippingCost || 0);
+        totalDisplay.textContent = formatPrice(total);
     }
 
     function copyToClipboard(text) {
@@ -446,17 +662,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (existing) existing.remove();
         const toast = document.createElement('div');
         toast.className = 'copy-toast';
-        toast.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>' + msg;
+        toast.innerHTML = '<i class="bi bi-check-circle-fill"></i> ' + msg;
         document.body.appendChild(toast);
         requestAnimationFrame(() => toast.classList.add('show'));
         setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 2000);
     }
 
     function animateCopyButton(btn) {
-        btn.classList.add('copied');
         const orig = btn.innerHTML;
         btn.innerHTML = '<i class="bi bi-check-lg"></i>';
-        setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 2000);
+        setTimeout(() => { btn.innerHTML = orig; }, 2000);
     }
 
     function updatePhoneDisplay() {
@@ -474,6 +689,12 @@ document.addEventListener('DOMContentLoaded', function() {
             phoneDisplay.classList.remove('d-none');
         } else { phoneDisplay.classList.add('d-none'); phoneInput.value = ''; }
     }
+
+    // ===== PROTECTION DOUBLE SOUMISSION =====
+    checkoutForm.addEventListener('submit', function() {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Traitement...';
+    });
 
     // ===== ÉVÉNEMENTS =====
     deliveryRadios.forEach(r => r.addEventListener('change', updateDeliveryUI));

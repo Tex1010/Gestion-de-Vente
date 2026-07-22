@@ -122,12 +122,18 @@ class Order(models.Model):
         allowed = self.VALID_TRANSITIONS.get(self.status, [])
         return new_status in allowed
 
-    def recalculate_total(self):
-        total = sum(
+    @property
+    def subtotal(self):
+        """Total des produits sans frais de livraison."""
+        return sum(
             (item.unit_price * item.quantity for item in self.items.all()),
             start=Decimal("0.00"),
         )
-        self.total_amount = total
+
+    def recalculate_total(self):
+        """Recalcule le total = produits + frais de livraison."""
+        products_total = self.subtotal
+        self.total_amount = products_total + self.shipping_cost
         self.save(update_fields=["total_amount", "updated_at"])
 
 

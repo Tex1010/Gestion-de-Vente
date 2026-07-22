@@ -102,3 +102,19 @@ class CheckoutForm(forms.Form):
                 css_class = field.widget.attrs.get("class", "")
                 if "btn-check" not in css_class and "form-select" not in css_class:
                     field.widget.attrs["class"] = "form-control"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        delivery_method = cleaned_data.get("delivery_method")
+        shipping_zone = cleaned_data.get("shipping_zone")
+
+        # Si livraison, une zone de livraison est obligatoire
+        if delivery_method == Order.DELIVERY_SHIP:
+            if not shipping_zone:
+                self.add_error("shipping_zone", "Veuillez sélectionner une zone de livraison.")
+            if not cleaned_data.get("city"):
+                self.add_error("city", "La ville est requise pour la livraison.")
+            if not cleaned_data.get("address"):
+                self.add_error("address", "L'adresse est requise pour la livraison.")
+
+        return cleaned_data

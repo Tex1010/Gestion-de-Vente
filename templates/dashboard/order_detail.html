@@ -48,6 +48,31 @@
             </div>
         </div>
 
+        {% if order.delivery_method %}
+        <div class="order-meta-grid">
+            <div class="order-meta-item">
+                <strong>Mode de réception</strong>
+                <span>
+                    {% if order.delivery_method == 'ship' %}
+                        <i class="bi bi-truck me-1"></i>Livraison
+                    {% else %}
+                        <i class="bi bi-shop me-1"></i>Retrait sur place
+                    {% endif %}
+                </span>
+            </div>
+            {% if order.delivery_method == 'ship' and order.shipping_zone_name %}
+            <div class="order-meta-item">
+                <strong>Zone de livraison</strong>
+                <span>{{ order.shipping_zone_name }}</span>
+            </div>
+            <div class="order-meta-item">
+                <strong>Frais de livraison</strong>
+                <span>{{ order.shipping_cost|floatformat:0 }} Ar</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
         {% if order.payment_method %}
         <div class="order-meta-grid">
             <div class="order-meta-item">
@@ -105,9 +130,21 @@
                     {% endfor %}
                 </tbody>
                 <tfoot>
+                    {% if order.shipping_cost > 0 %}
+                    <tr>
+                        <td colspan="3" class="text-end text-muted">Sous-total produits</td>
+                        <td>{{ order.subtotal|floatformat:0 }} Ar</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="text-end text-muted">
+                            <i class="bi bi-truck me-1"></i>Frais de livraison ({{ order.shipping_zone_name }})
+                        </td>
+                        <td>+ {{ order.shipping_cost|floatformat:0 }} Ar</td>
+                    </tr>
+                    {% endif %}
                     <tr class="order-total-row">
-                        <td colspan="3" class="text-end">Total</td>
-                        <td>{{ order.total_amount|floatformat:0 }} Ar</td>
+                        <td colspan="3" class="text-end fw-bold">Total</td>
+                        <td class="fw-bold">{{ order.total_amount|floatformat:0 }} Ar</td>
                     </tr>
                 </tfoot>
             </table>

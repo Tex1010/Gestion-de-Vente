@@ -34,6 +34,7 @@
                     <tr>
                         <th>Client</th>
                         <th>Contact</th>
+                        <th>Réception</th>
                         <th>Montant</th>
                         <th>Articles</th>
                         <th>Statut</th>
@@ -48,6 +49,14 @@
                         <td data-label="Contact">
                             <small>{{ order.phone }}</small><br>
                             <small class="text-soft">{{ order.email|default:'' }}</small>
+                        </td>
+                        <td data-label="Réception">
+                            {% if order.delivery_method == 'ship' %}
+                                <small class="text-success"><i class="bi bi-truck"></i> Livraison</small><br>
+                                <small class="text-soft">{{ order.shipping_zone_name|default:'' }}</small>
+                            {% else %}
+                                <small class="text-primary"><i class="bi bi-shop"></i> Retrait</small>
+                            {% endif %}
                         </td>
                         <td data-label="Montant"><strong>{{ order.total_amount|floatformat:0 }} Ar</strong></td>
                         <td data-label="Articles">{{ order.item_count }}</td>

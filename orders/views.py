@@ -244,17 +244,12 @@ def checkout(request):
                     product.stock = max(product.stock - item["quantity"], 0)
                     product.save(update_fields=["stock"])
 
-                # Calculer le total : produits + livraison
-                products_total = sum(
-                    (item.unit_price * item.quantity for item in order.items.all()),
-                    start=Decimal("0.00"),
-                )
-                order.total_amount = products_total + shipping_cost
-                order.save(update_fields=["total_amount", "notes", "updated_at"])
+                # Utiliser recalculate_total qui inclut les frais de livraison
+                order.recalculate_total()
 
-                # Sauvegarder les notes si modifiées
-                if "notes" in order.get_dirty_fields() if hasattr(order, 'get_dirty_fields') else True:
-                    pass
+                # Mettre à jour les notes
+                if order.notes:
+                    Order.objects.filter(pk=order.pk).update(notes=order.notes)
 
                 cart.clear()
 
@@ -282,6 +277,15 @@ def checkout(request):
 
     payment_methods = PaymentMethod.objects.filter(is_active=True)
 
+    # Construire les données des zones de livraison pour le frontend JSON
+    shipping_zones_json = {
+        str(zone.pk): {
+            "cost": float(zone.base_cost),
+            "name": zone.name,
+        }
+        for zone in shipping_zones
+    }
+
     return render(
         request,
         "orders/checkout.html",
@@ -291,6 +295,7 @@ def checkout(request):
             "cart_total": cart_subtotal,
             "payment_methods": payment_methods,
             "shipping_zones": shipping_zones,
+            "shipping_zones_json": shipping_zones_json,
         },
     )
 
